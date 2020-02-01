@@ -1,0 +1,7 @@
+.projects_list {
+  margin-top: 4rem;
+
+  > :not(:last-child) {
+    margin-bottom: 1rem;
+  }
+}

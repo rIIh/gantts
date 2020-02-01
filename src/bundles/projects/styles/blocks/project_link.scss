@@ -1,0 +1,74 @@
+.project_link {
+  position: relative;
+  border: 1px solid lightgrey;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  background-color: white;
+  transition: background-color 200ms;
+  line-height: 0;
+
+  > :not(:last-child) {
+    margin-right: 0.25rem;
+  }
+
+  > * {
+    margin: 0;
+  }
+
+  &:hover {
+    background-color: #F8F9FA;
+  }
+
+  &__title {
+    color: black;
+  }
+
+  &__assigned_list {
+    display: flex;
+    align-items: center;
+    z-index: 52;
+
+    :not(:last-child) {
+      margin-right: .5rem;
+    }
+  }
+
+  &__invite_user {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 18px;
+    width: 18px;
+    border-radius: 12px;
+    line-height: 0;
+    font-size: 10px;
+    text-align: center;
+    color: white;
+    background-color: #9ba2ab;
+    transition: background-color 200ms;
+
+    &:hover {
+      background-color: grey;
+      color: white;
+      text-decoration: none;
+    }
+  }
+
+  &__user_pic {
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    background-color: grey;
+    color: white;
+    text-align: center;
+    line-height: 1.6rem;
+
+    > * {
+      height: 100%;
+      width: 100%;
+    }
+  }
+}

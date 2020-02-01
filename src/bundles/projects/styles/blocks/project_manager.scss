@@ -1,0 +1,67 @@
+@import './toolbar.scss';
+
+.project_manager {
+  flex: 1 0 auto;
+  display: flex;
+
+  $row-height: 32px;
+
+  &__meta_column {
+    height: 100%;
+    background-color: rgb(255, 227, 227);
+    width: 20%;
+  }
+
+  &__task_column {
+    height: 100%;
+    background-color: rgb(255, 242, 255);
+    width: 495px;
+  }
+
+  &__task_group {
+    margin-left: 1rem;
+  }
+
+  &__task {
+    margin-left: 2rem;
+  }
+
+  &__task_group, &__task_toolbar, &__task, &__task_row {
+    background-color: random();
+    height: $row-height;
+    display: flex;
+    align-items: center;
+  }
+
+  &__gantt_column {
+    height: 100%;
+    background-color: rgb(255, 227, 227);
+    flex: 1 1 auto;
+  }
+
+  &__task_toolbar {
+    padding-left: 2rem;
+    display: flex;
+    align-items: center;
+
+    > :not(:last-child) {
+      margin-right: 0.5rem;
+    }
+  }
+
+  &__context_menu {
+    background-color: white;
+    box-shadow: 4px 4px 16px grey;
+    border-radius: 4px;
+    padding: 12px;
+
+    > ul > li {
+      padding: 2px 0;
+    }
+  }
+
+  &__context_divider {
+    border-bottom: 1px solid grey;
+    margin: 0 -12px;
+  }
+}
