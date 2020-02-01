@@ -1,0 +1,24 @@
+.auth-form {
+  margin: auto;
+  display: flex;
+  height: 100%;
+  flex-flow: column;
+  justify-content: center;
+
+  @media(min-width: 786px) {
+    width: 60%;
+  }
+
+  > *:not(:last-child) {
+    margin-bottom: 1rem;
+  }
+
+  &__create-account-block {
+    display: flex;
+    flex-flow: column;
+  }
+
+  &__create-account-text, &__create-account-link {
+    text-align: center;
+  }
+}
