@@ -1,0 +1,174 @@
+.side_toolbar {
+  position: relative;
+  height: 100vh;
+  z-index: 1000;
+  width: 75px;
+  background-color: #352F4B;
+  padding: 12px;
+
+  > :not(:last-child) {
+    margin-bottom: 12px;
+  }
+
+  &__link, &__link:hover {
+    text-decoration: none;
+  }
+
+  &__brand_button {
+    @include size(35px);
+    margin: auto;
+    text-align: center;
+    vertical-align: center;
+    line-height: 35px;
+    color: white;
+
+    :hover * {
+      text-decoration: none;
+    }
+  }
+
+  &__button_wrapper {
+    border: 8px #352F4B solid;
+    border-radius: 10px;
+    color: #352F4B;
+    margin: auto;
+    height: 51px;
+    width: 51px;
+
+    &:hover {
+      background-color: #594D7F;
+      border-color: #594D7F;
+    }
+  }
+
+  &__button {
+    background: none;
+    border: 1px #352F4B solid;
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    height: 35px;
+    line-height: 32px;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    width: 35px;
+
+    background-color: #B970D7;
+    border-color: #B970D7;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    &:hover {
+      cursor: pointer;
+      text-decoration: none;
+    }
+  }
+}
+
+.side_popover {
+  position: absolute;
+  z-index: 800;
+  height: 100vh;
+  transform: none!important;
+  left: 75px!important;
+  min-width: 310px;
+  top: 0;
+  box-sizing: content-box!important;
+  border: none;
+  border-radius: 0;
+  background-color: rgb(58, 51, 83);
+  padding: 55px 28px;
+
+  * {
+    color: white;
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__title {
+
+  }
+
+  &__list {
+    margin-top: 2rem;
+    padding-left: 2rem;
+
+    li {
+      padding: 0.5rem 0.25rem 0.5rem 2rem;
+      padding-left: 2rem;
+
+      > a {
+        color: rgb(243, 243, 243);
+
+        &:hover {
+          color: white;
+          text-decoration: none;
+        }
+      }
+
+      > .badge {
+        @include unselectable();
+        float: right;
+        line-height: inherit;
+      }
+
+      &:hover {
+        background-color: rgb(92, 81, 131);
+        border-radius: 4px;
+      }
+    }
+
+    > :not(:last-child) {
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  &__right {
+    line-height: 0;
+    display: flex;
+    align-items: center;
+
+    > :not(:last-child) {
+      margin-right: 0.5rem;
+    }
+  }
+
+  &__button {
+    @include rounded(28px);
+    background-color: slateblue;
+    display: inline-block;
+  }
+
+  &--enter {
+    display: block;
+    transform: translateX(-100%)!important;
+  }
+
+  &--exit, &--enter {
+    pointer-events: none;
+  }
+
+  &--enter-active, &--enter-done {
+    transform: translateX(0)!important;
+    transition: all 400ms;
+    pointer-events: all;
+  }
+  
+  &--exit-active {
+    transform: translateX(-100%)!important;
+    transition: all 400ms;
+  }
+
+  &--exit-done {
+    pointer-events: none;
+    display: none;
+    transform: translateX(-100%)!important;
+  }
+}
+
