@@ -5,7 +5,7 @@ import projectActions from './actions';
 import firebase from 'firebase';
 import _ from 'lodash';
 import Immutable from 'immutable';
-import { Project, ProjectCreator, Task, ProjectID, TaskGroupID, TaskGroupCreator, ProjectsState } from '../types';
+import { Project, ProjectCreator, Task, ProjectID, TaskGroupID, TaskGroupConstructor, ProjectsState, TaskConstructor } from '../types';
 import { TaskGroup } from '../types/index';
 
 type RootDispatch = Dispatch<ActionType<typeof projectActions>>;
@@ -39,7 +39,6 @@ export const fetchProjects = (user: firebase.User) => {
 export const fetchTasksFor = (id: ProjectID) => {
   return async (dispatch: RootDispatch) => {
     dispatch(projectActions.setLoading(true));
-
     try {
       const taskGroupsForState: TaskGroup[] = [];
       let tasksForState: Immutable.Map<TaskGroupID, Task[]> = Immutable.Map();
@@ -48,8 +47,9 @@ export const fetchTasksFor = (id: ProjectID) => {
       taskGroupsForState.push(...taskGroups);
 
       for (let taskGroup of taskGroups) {
-        const tasks = (await FirebaseCloud.tasks(id, taskGroup.id).get()).docs.map(doc => doc.data());
-        tasksForState = tasksForState.set(taskGroup.id, tasks.map(data => data as Task));
+        const taskDocs = (await FirebaseCloud.tasks(id, taskGroup.id).get()).docs;
+        const tasks = taskDocs.map(doc => ({ ...doc.data(), id: doc.id } as Task));
+        tasksForState = tasksForState.set(taskGroup.id, tasks);
       }
       dispatch(projectActions.tasksFetched({ projectID: id, tasks: tasksForState, taskGroups: taskGroupsForState }));
     } catch(e) {
@@ -86,7 +86,7 @@ export const createProject = (project: ProjectCreator) => {
         documents: [],
         history: [],
         notes: [],
-      } as TaskGroupCreator);
+      } as TaskGroupConstructor);
       console.log(createdProject);
       dispatch(projectActions.created({ 
         ...createdProject as Project,
@@ -94,6 +94,34 @@ export const createProject = (project: ProjectCreator) => {
       }));
     } catch(e) {
       console.log(e);
+      dispatch(projectActions.setFailed(e));
+    } finally {
+      dispatch(projectActions.setLoading(false));
+    }
+  };
+};
+
+export const createTaskGroup = (taskGroup: TaskGroupConstructor) => {
+  return async (dispatch: RootDispatch) => {
+    dispatch(projectActions.setLoading(true));
+    try {
+      await FirebaseCloud.taskGroups(taskGroup.projectID).doc().set(taskGroup);
+    }
+    catch (e) {
+      dispatch(projectActions.setFailed(e));
+    } finally {
+      dispatch(projectActions.setLoading(false));
+    }
+  };
+};
+
+export const createTask = (task: TaskConstructor) => {
+  return async (dispatch: RootDispatch) => {
+    dispatch(projectActions.setLoading(true));
+    try {
+      await FirebaseCloud.tasks(task.projectID, task.parentGroupID).doc().set(task);
+    }
+    catch (e) {
       dispatch(projectActions.setFailed(e));
     } finally {
       dispatch(projectActions.setLoading(false));

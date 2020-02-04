@@ -13,6 +13,7 @@
     "downlevelIteration": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
+    "sourceMap": true,
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,

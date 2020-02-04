@@ -44,7 +44,7 @@ const AppLayout: React.FC = () => {
       <Col className="flex-shrink-1 flex-grow-0" >
         { user && <Sidemenu/> }
       </Col>
-      <Col style={{ display: 'flex', flexFlow: 'column' }}>
+      <Col className="page__content" style={{ display: 'flex', flexFlow: 'column' }}>
         { user && <Header/> }
           <Switch>
               { (routes.map(({ path, exact, component }) => <Route exact={exact} key={path} path={path} component={component}/>)) }

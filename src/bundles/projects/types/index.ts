@@ -38,26 +38,31 @@ export enum WeekBitMask {
   Saturday  = 1 << 7,
 }
 
-export interface TaskGroupCreator extends Discussable, WithNotes, WithDocs, WithHistory {
+export interface TaskGroupConstructor extends Discussable, WithNotes, WithDocs, WithHistory {
   title: string;
   projectID: ProjectID;
 }
 
-export interface TaskGroup extends TaskGroupCreator {
+export interface TaskGroup extends TaskGroupConstructor {
   id: string;
 }
 
 export interface TaskConstructor extends Discussable, WithNotes, WithDocs, WithHistory {
   title: string;
   progress: number;
-  start: Date;
-  end: Date;
+  start?: Date;
+  end?: Date;
   projectID: ProjectID;
   parentGroupID: TaskGroupID;
 }
 
+export enum TaskType {
+   Task, Milestone,
+}
+
 export interface Task extends TaskConstructor {
   id: string;
+  type: TaskType;
   subtasks: Subtask[];
   dependsOn?: Task;
   dependentOn?: Task;
@@ -67,13 +72,6 @@ export interface Task extends TaskConstructor {
 export interface Subtask {
   title: string;
   completed: boolean;
-}
-
-export interface Milestone extends Discussable, WithNotes, WithDocs, WithHistory {
-  date: Date;
-  title: string;
-  achieved: boolean;
-  assigned: firebase.User[];
 }
 
 export interface HistorySnapshot {
