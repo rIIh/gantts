@@ -1,15 +1,16 @@
-import { FirebaseAuth } from './../../common/services/firebase';
+import { FirebaseAuth } from '../../common/services/firebase';
 import { ActionType, createReducer } from 'typesafe-actions';
 import userActions from './actions';
 import { UserState } from '../types';
 
 const initialState: UserState = {
-  user: FirebaseAuth.currentUser,
+  user: null,
+  usersAtCompany: [],
   isLoading: false,
   isFailed: false,
   message: '',
 };
-const { authenticate, logOut, setUser } = userActions;
+const { authenticate, logOut, setUser, usersAtCompany } = userActions;
 type RootAction = ActionType<typeof userActions>;
 
 const userReducer = createReducer<UserState, RootAction>(initialState)
@@ -19,6 +20,9 @@ const userReducer = createReducer<UserState, RootAction>(initialState)
   .handleAction([authenticate.request, logOut.request], (state) => {
     return { ...state, isLoading: true, isFailed: false }; 
   })
+  .handleAction(usersAtCompany, (state, action) => {
+    return { ...state, usersAtCompany: action.payload };
+  })
   .handleAction(authenticate.success, (state, action) => {
     return { ...state, isLoading: false, user: action.payload.user }; 
   })
@@ -26,7 +30,7 @@ const userReducer = createReducer<UserState, RootAction>(initialState)
     return { ...state, isLoading: false, isFailed: true, message: action.payload.message }; 
   })
   .handleAction(logOut.success, (state) => {
-    return { ...state, isLoading: false, user: null };
+    return { ...state, isLoading: false, user: null, usersAtCompany: [] };
   });
 
 export default userReducer;

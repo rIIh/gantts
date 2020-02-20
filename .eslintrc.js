@@ -8,7 +8,8 @@ module.exports = {
       }
   },
   "plugins": [
-      "@typescript-eslint"
+      "@typescript-eslint",
+      "react",
   ],
   "rules": {
       "@typescript-eslint/member-delimiter-style": [
@@ -36,6 +37,7 @@ module.exports = {
           "error",
           "prefer-double"
       ],
+      "react/jsx-curly-spacing": [2, {"when": "always", "allowMultiline": true, "attributes": false}],
       "object-curly-spacing": ["warn", "always"],
       "template-curly-spacing": "warn",
       "no-duplicate-imports": "error",

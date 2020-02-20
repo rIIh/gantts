@@ -1,0 +1,557 @@
+@charset "UTF-8";@import url("https://use.typekit.net/hkz2bhf.css");@font-face {
+  font-family: 'TG Desktop App Icons';
+  font-style: normal;
+  font-weight: normal;
+  src: url('/icons/TG Desktop App Icons v1.eot');
+  src: url('/icons/TG Desktop App Icons v1.eot') format('embedded-opentype'),
+  url('/icons/TG Desktop App Icons v1.woff2') format('woff2'),
+  url('/icons/TG Desktop App Icons v1.woff') format('woff'),
+  url('/icons/TG Desktop App Icons v1.ttf') format('truetype'),
+  url('/icons/TG Desktop App Icons v1.svg') format('svg');
+}
+
+.ic-icon,.tg-icon {
+  display: inline-block;
+  font: normal normal normal 1em/1 'TG Desktop App Icons';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  speak: none;
+  text-transform: none
+}
+
+.ic-icon-sm {
+  font-size: 0.8em
+}
+
+.ic-icon-lg {
+  font-size: 1.2em
+}
+
+.ic-icon-16 {
+  font-size: 16px
+}
+
+.ic-icon-32 {
+  font-size: 32px
+}
+
+.ic-icon-bg-square,.ic-icon-bg-circle {
+  background-color: #eee;
+  padding: 0.35em
+}
+
+.ic-icon-bg-circle {
+  border-radius: 50%
+}
+
+.ic-icon-ul {
+  list-style-type: none;
+  padding-left: 0
+}
+
+.ic-icon-ul > li {
+  align-items: flex-start;
+  display: flex;
+  line-height: 1.4
+}
+
+.ic-icon-ul > li > .ic-icon,.ic-icon-ul > li > .tg-icon {
+  line-height: inherit;
+  margin-right: 0.4em
+}
+
+.ic-icon-is-spinning {
+  -webkit-animation: ic-icon-spin 2s infinite linear;
+  -moz-animation: ic-icon-spin 2s infinite linear;
+  animation: ic-icon-spin 2s infinite linear
+}
+
+@-webkit-keyframes ic-icon-spin {
+  0% {
+    -webkit-transform: rotate(0deg)
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg)
+  }
+}
+
+@-moz-keyframes ic-icon-spin {
+  0% {
+    -moz-transform: rotate(0deg)
+  }
+
+  100% {
+    -moz-transform: rotate(360deg)
+  }
+}
+
+@keyframes ic-icon-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg)
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg)
+  }
+}
+
+.ic-icon-rotate-90 {
+  filter: progid:dximagetransform.microsoft.basicimage(rotation=1);
+  -webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  transform: rotate(90deg)
+}
+
+.ic-icon-rotate-180 {
+  filter: progid:dximagetransform.microsoft.basicimage(rotation=2);
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  -ms-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+  transform: rotate(180deg)
+}
+
+.ic-icon-rotate-270 {
+  filter: progid:dximagetransform.microsoft.basicimage(rotation=3);
+  -webkit-transform: rotate(270deg);
+  -moz-transform: rotate(270deg);
+  -ms-transform: rotate(270deg);
+  -o-transform: rotate(270deg);
+  transform: rotate(270deg)
+}
+
+.ic-icon-flip-y {
+  filter: progid:dximagetransform.microsoft.basicimage(rotation=0);
+  -webkit-transform: scale(-1, 1);
+  -moz-transform: scale(-1, 1);
+  -ms-transform: scale(-1, 1);
+  -o-transform: scale(-1, 1);
+  transform: scale(-1, 1)
+}
+
+.ic-icon-flip-x {
+  filter: progid:dximagetransform.microsoft.basicimage(rotation=2);
+  -webkit-transform: scale(1, -1);
+  -moz-transform: scale(1, -1);
+  -ms-transform: scale(1, -1);
+  -o-transform: scale(1, -1);
+  transform: scale(1, -1)
+}
+
+.ic-glyph__circle__arrow__colored__right::before {
+  content: '\ea08'
+}
+
+.ic-glyph__TeamGantt-logo::before,.tg-icon.teamgantt-logo::before {
+  content: '\ea3c'
+}
+
+.ic-outline__document::before,.tg-icon.document::before {
+  content: '\ea55'
+}
+
+.ic-outline__caret__down::before,.tg-icon.caret-down::before {
+  content: '\ea56'
+}
+
+.ic-outline__caret__left::before,.tg-icon.caret-left::before {
+  content: '\ea57'
+}
+
+.ic-outline__caret__right::before,.tg-icon.caret-right::before {
+  content: '\ea58'
+}
+
+.ic-outline__caret__up::before,.tg-icon.caret-up::before {
+  content: '\ea59'
+}
+
+.ic-outline__mobile-love::before,.tg-icon.mobile-love::before {
+  content: '\ea5a'
+}
+
+.ic-outline__panel::before,.tg-icon.panel::before {
+  content: '\ea5b'
+}
+
+.ic-outline__menu::before,.tg-icon.menu::before {
+  content: '\ea5c'
+}
+
+.ic-outline__favorite::before,.tg-icon.star-outline::before {
+  content: '\ea5d'
+}
+
+.ic-outline__preferences::before,.tg-icon.preferences::before {
+  content: '\ea5e'
+}
+
+.ic-outline__reload::before,.tg-icon.reload::before {
+  content: '\ea61'
+}
+
+.ic-outline__file-add::before,.tg-icon.file-add::before {
+  content: '\ea62'
+}
+
+.ic-outline__upload::before {
+  content: '\ea63'
+}
+
+.ic-outline__check::before,.tg-icon.check::before {
+  content: '\ea64'
+}
+
+.ic-outline__timer::before,.tg-icon.timer::before {
+  content: '\ea65'
+}
+
+.ic-glyph__circle__arrow__down::before,.tg-icon.circle-arrow-down::before {
+  content: '\ea66'
+}
+
+.ic-glyph__circle__arrow__right::before,.tg-icon.circle-arrow-right::before {
+  content: '\ea67'
+}
+
+.ic-glyph__circle__arrow__up::before,.tg-icon.circle-arrow-up::before {
+  content: '\ea68'
+}
+
+.ic-glyph__circle__arrow___left::before,.tg-icon.circle-arrow-left::before {
+  content: '\ea69'
+}
+
+.ic-outline__add::before,.tg-icon.circle-plus-outline::before {
+  content: '\ea6a'
+}
+
+.ic-glyph__triangle__down::before,.tg-icon.triangle-down::before {
+  content: '\ea6b'
+}
+
+.ic-glyph__triangle__left::before,.tg-icon.triangle-left::before {
+  content: '\ea6c'
+}
+
+.ic-glyph__triangle__right::before,.tg-icon.triangle-right::before {
+  content: '\ea6d'
+}
+
+.ic-glyph__triangle__up::before,.tg-icon.triangle-up::before {
+  content: '\ea6e'
+}
+
+.ic-outline__user::before,.tg-icon.user-outline::before {
+  content: '\ea6f'
+}
+
+.ic-outline__chat-square-active::before,.tg-icon.discussion-square-notification::before {
+  content: '\ea70'
+}
+
+.ic-glyph__color::before,.tg-icon.color::before {
+  content: '\ea71'
+}
+
+.ic-outline__attachment::before,.tg-icon.attachment::before {
+  content: '\ea73'
+}
+
+.ic-glyph-resources::before,.tg-icon.resources::before {
+  content: '\ea74'
+}
+
+.ic-social__linkedin::before,.tg-icon.linkedin::before {
+  content: '\ea75'
+}
+
+.ic-outline__circle__minus::before,.tg-icon.circle-minus-outline::before {
+  content: '\ea77'
+}
+
+.ic-glyph__highlight::before,.tg-icon.highlight::before {
+  content: '\ea78'
+}
+
+.ic-social_instagram::before,.tg-icon.instagram::before {
+  content: '\ea7a'
+}
+
+.ic-glyph__circle__user::before,.tg-icon.circle-user::before {
+  content: '\ea7b'
+}
+
+.ic-outline__arrow__right::before,.tg-icon.arrow-right-outline::before {
+  content: '\ea7c'
+}
+
+.ic-outline__arrow__left::before,.tg-icon.arrow-left-outline::before,.tg-icon.arrow-up-outline::before,.tg-icon.arrow-down-outline::before {
+  content: '\ea7d'
+}
+
+.ic-glyph__circle__exc::before,.tg-icon.circle-alert::before {
+  content: '\ea83'
+}
+
+.ic-glyph__trash::before,.tg-icon.trash::before {
+  content: '\ea84'
+}
+
+.ic-outline__analytics::before,.tg-icon.analytics::before {
+  content: '\ea85'
+}
+
+.ic-outline__at-sign::before,.tg-icon.at-sign::before {
+  content: '\ea86'
+}
+
+.ic-social__youtube::before,.tg-icon.youtube::before {
+  content: '\ea87'
+}
+
+.ic-social__email::before,.tg-icon.email::before {
+  content: '\ea88'
+}
+
+.ic-outline__circle__check::before,.tg-icon.circle-check::before {
+  content: '\ea89'
+}
+
+.ic-social__facebook::before,.tg-icon.facebook::before {
+  content: '\ea8a'
+}
+
+.ic-outline__discount::before,.tg-icon.percent::before {
+  content: '\ea8b'
+}
+
+.ic-outline__checklist::before,.tg-icon.checklist::before {
+  content: '\ea8c'
+}
+
+.ic-glyph__circle__arrow__simple__right::before,.tg-icon.circle-arrow-outline-right::before {
+  content: '\ea8e'
+}
+
+.ic-glyph__circle__arrow__simple__left::before,.tg-icon.circle-arrow-outline-left::before {
+  content: '\ea8f'
+}
+
+.ic-glyph__circle__arrow__simple__down::before,.tg-icon.circle-arrow-outline-down::before {
+  content: '\ea90'
+}
+
+.ic-outline__device-check::before,.tg-icon.device-check::before {
+  content: '\ea91'
+}
+
+.ic-outline__chat__attachment::before,.tg-icon.discussion-attachment::before {
+  content: '\ea92'
+}
+
+.ic-outline__filter::before,.tg-icon.filter::before {
+  content: '\ea93'
+}
+
+.ic-glyph__pdf::before,.tg-icon.pdf::before {
+  content: '\ea94'
+}
+
+.ic-outline__pdf::before,.tg-icon.pdf-outline::before {
+  content: '\ea95'
+}
+
+.ic-outline__chat::before,.tg-icon.discussion::before {
+  content: '\ea97'
+}
+
+.ic-glyph__video-play::before,.tg-icon.video-play::before {
+  content: '\ea99'
+}
+
+.ic-outline__download::before,.tg-icon.download::before {
+  content: '\ea9a'
+}
+
+.ic-glyph__question::before,.tg-icon.circle-question::before {
+  content: '\ea9b'
+}
+
+.ic-glyph__circle__add::before,.tg-icon.circle-plus::before {
+  content: '\ea9c'
+}
+
+.ic-glyph__edit-pencil::before,.tg-icon.edit-pencil::before {
+  content: '\ea9d'
+}
+
+.ic-outline__edit::before,.tg-icon.edit::before {
+  content: '\ea9f'
+}
+
+.ic-glyph__favorite::before,.tg-icon.star::before {
+  content: '\eaa0'
+}
+
+.ic-outline__close::before,.tg-icon.remove::before {
+  content: '\eaa1'
+}
+
+.ic-social__twitter::before,.tg-icon.twitter::before {
+  content: '\eaa2'
+}
+
+.ic-outline__share::before,.tg-icon.share::before {
+  content: '\eaa4'
+}
+
+.ic-outline__video-gallery::before,.tg-icon.video-gallery::before {
+  content: '\eaa5'
+}
+
+.ic-social__podcast::before,.tg-icon.podcast::before {
+  content: '\eaa6'
+}
+
+.ic-outline__calender::before,.tg-icon.calendar::before {
+  content: '\eaa7'
+}
+
+.ic-glyph__circle__close::before,.tg-icon.circle-remove::before {
+  content: '\eaa9'
+}
+
+.ic-outline__refresh::before,.tg-icon.refresh::before {
+  content: '\eaaa'
+}
+
+.ic-outline__clock::before,.tg-icon.clock-outline::before {
+  content: '\eaab'
+}
+
+.ic-outline__circle__question::before,.tg-icon.circle-question-outline::before {
+  content: '\eaac'
+}
+
+.ic-outline__import::before,.tg-icon.import::before {
+  content: '\eaad'
+}
+
+.ic-outline__search::before,.tg-icon.magnifying-glass::before {
+  content: '\eaaf'
+}
+
+.ic-outline__chat__notification::before,.tg-icon.discussion-notification::before {
+  content: '\eab0'
+}
+
+.ic-glyph__clock::before,.tg-icon.clock::before {
+  content: '\eab1'
+}
+
+.ic-outline__emoji::before,.tg-icon.emoji::before {
+  content: '\eab4'
+}
+
+.ic-glyph__timeline::before,.tg-icon.timeline::before {
+  content: '\eab5'
+}
+
+.ic-glyph__circle__arrow__simple__up::before,.tg-icon.circle-arrow-outline-up::before {
+  content: '\eab7'
+}
+
+.ic-glyph__arrow__down::before,.tg-icon.arrow-down::before {
+  content: '\eabc'
+}
+
+.ic-glyph__arrow__left::before,.tg-icon.arrow-left::before {
+  content: '\eabd'
+}
+
+.ic-glyph__arrow__right::before,.tg-icon.arrow-right::before {
+  content: '\eabe'
+}
+
+.ic-glyph__arrow__up::before,.tg-icon.arrow-up::before {
+  content: '\eabf'
+}
+
+.ic-glyph__TeamGantt-logo-bars::before,.tg-icon.teamgantt-logo-bars::before {
+  content: '\eac2'
+}
+
+.ic-glyph__dot-menu::before,.tg-icon.dot-menu::before,.tg-icon.dot-menu-horizontal::before {
+  content: '\eac3'
+}
+
+.ic-outline__document-check::before,.tg-icon.checkbox::before {
+  content: '\eac5'
+}
+
+.ic-outline__plus::before,.tg-icon.plus::before {
+  content: '\eac6'
+}
+
+.ic-outline__open_in::before,.tg-icon.open-in::before {
+  content: '\eac7'
+}
+
+.ic-outline__info::before,.tg-icon.info-outline::before {
+  content: '\eac8'
+}
+
+.ic-glyph__info::before,.tg-icon.info::before {
+  content: '\eac9'
+}
+
+.ic-glyph__single__user::before,.tg-icon.user::before {
+  content: '\eaca'
+}
+
+.tg-icon.icon-small {
+  font-size: 12px
+}
+
+.tg-icon.icon-large {
+  font-size: 24px
+}
+
+.tg-icon.arrow-up-outline {
+  filter: progid:dximagetransform.microsoft.basicimage(rotation=1);
+  -webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  transform: rotate(90deg)
+}
+
+.tg-icon.arrow-down-outline {
+  filter: progid:dximagetransform.microsoft.basicimage(rotation=1);
+  -webkit-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+  -o-transform: rotate(-90deg);
+  transform: rotate(-90deg)
+}
+
+.tg-icon.dot-menu {
+  filter: progid:dximagetransform.microsoft.basicimage(rotation=1);
+  -webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  transform: rotate(90deg)
+}

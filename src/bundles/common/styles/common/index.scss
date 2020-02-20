@@ -30,6 +30,20 @@ body, #root {
   -moz-osx-font-smoothing: grayscale;
 }
 
+p {
+  color: #868686;
+  margin: 0;
+}
+
+.modal-dialog {
+  max-width: 404px !important;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -56,7 +70,7 @@ ol, ul {
 }
 
 a, button.link {
-  color: #00ADEE;
+  color: grey;
   text-decoration: none;
 }
 

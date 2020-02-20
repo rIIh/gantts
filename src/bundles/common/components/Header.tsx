@@ -4,13 +4,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { UserState } from '../../user/types';
 import { logoutThunk } from '../../user/redux/thunks';
 import { useHistory } from 'react-router';
+import { UserPic } from '../../user/components/UserPic';
+import { Link } from 'react-router-dom';
 
 const Header: React.FC = () => {
   const { user } = useSelector<{ userState: UserState }, UserState>((state) => state.userState);
   const dispatch = useDispatch();
 
   return <div className="header">
-    <Container className="header__container">
+    <Container fluid className="header__container">
       <div className="header__right">
         <OverlayTrigger trigger="click" rootClose
           placement="bottom-end" overlay={
@@ -20,18 +22,13 @@ const Header: React.FC = () => {
                   <Col>
                     <h6 className="user_dropdown__title">Bookmarks</h6>
                     <ul className="user_dropdown__list">
-                      <li>Hello world</li>
+                      {/*<li>Hello world</li>*/}
                     </ul>
                   </Col>
                   <Col>
                     <h6 className="user_dropdown__title">Settings</h6>
                     <ul className="user_dropdown__list">
-                      <li><a href="/admin/account-settings">Account Settings</a></li>
-                      <li><a href="/admin/edit-profile">Edit My Profile</a></li>
-                      <li><a href="https://prod.teamgantt.com/gantt/admin/email">Project Notifications</a></li>
-                      <li>
-                        <button className="link">Set as Homepage</button>
-                      </li>
+                      <li><Link to="/account">Account Settings</Link></li>
                     </ul>
                   </Col>
                 </Row>
@@ -47,9 +44,7 @@ const Header: React.FC = () => {
             </Popover>
           }>
           <div className="header__user_dropdown user_dropdown">
-            <button className="header__user_avatar">
-              <img src={user?.photoURL ?? 'https://picsum.photos/400'} alt=""/>
-            </button>
+            { user && <UserPic clickable user={user} size={42}/> }
           </div>
         </OverlayTrigger>
       </div>

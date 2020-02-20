@@ -15,13 +15,13 @@ const isNumber = (n: string | number): boolean =>
 
 const BitMaskInput: React.FC<BitMaskInputProps> = ({ bitmask, name }) => {
   const [field, _, { setValue }] = useField(name);
-  const flags = Object.entries(bitmask).filter(e => !isNumber(e[0]) && e[1] as number > 0);
+  const flags = Object.entries(bitmask).filter(e => !isNumber(e[0]) && e[1] as number > 0 && e[1] != 254);
 
   return <ToggleButtonGroup 
       type="checkbox"
       className="d-block"
       value={bitmaskValues(field.value, flags.map(flag => flag[1] as number))}
-      onChange={(values: number[]) => setValue(reduceToBitmask(values))}>
+      onChange={(values: number[]) => setValue(values.length > 0 ? reduceToBitmask(values) : field.value)}>
     { flags.map((entry: any) => (
       <ToggleButton key={entry[1]} value={entry[1]}>{ entry[0] }</ToggleButton>
     )) }  

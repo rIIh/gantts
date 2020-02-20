@@ -21,6 +21,12 @@
   &__task_group {
     margin-left: 1rem;
   }
+  &__task_group_collapse {
+    position: absolute;
+    transform: translateX(-100%);
+    padding: 0 4px;
+    cursor: pointer;
+  }
 
   &__task {
     margin-left: 2rem;

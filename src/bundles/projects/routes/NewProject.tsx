@@ -9,6 +9,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { ProjectsState } from '../types/index';
 import { useHistory } from 'react-router';
 import { createProject } from '../redux/thunks';
+import { useTypedSelector } from '../../../redux/rootReducer';
+import * as Yup from 'yup';
 
 enum Filter {
   Active = 'Active',
@@ -19,6 +21,7 @@ enum Filter {
 const initialProject: ProjectCreator = {
   title: '',
   startDate: new Date(),
+  comments: [],
   daysInWeekBitMask: 
     WeekBitMask.Monday |
     WeekBitMask.Tuesday |
@@ -28,18 +31,21 @@ const initialProject: ProjectCreator = {
 };
 
 const NewProject: React.FC = () => {
-  const { projects, isLoading, isFailed, message } = useSelector<{ projectsState: ProjectsState }, ProjectsState>(state => state.projectsState);
+  const { lazy: projects, isLoading, isFailed, message } = useTypedSelector(state => state.projectsState);
   const [isSubmitting, setSubmitting] = useState(false);
   const dispatch = useDispatch();
   const history = useHistory();
   useEffect(() => isSubmitting && !isLoading && !isFailed ? 
-    history.push('/projects/' + projects[projects.length - 1].id) : undefined, [isLoading]);
+    history.push('/projects/' + projects[projects.length - 1].uid) : undefined, [isLoading]);
 
   return <Container className="py-5 page__container flex-grow-1">
     <h1>Create a New Project</h1>
     { isLoading ? 'Is loading' : '' }
     { isFailed && <Alert variant="danger">{message}</Alert> }
     <Formik initialValues={initialProject}
+            validationSchema={Yup.object({
+              title: Yup.string().required('Please enter project title'),
+            })}
             onSubmit={async (project) => {
               const promise = dispatch(createProject(project));
               setSubmitting(true);

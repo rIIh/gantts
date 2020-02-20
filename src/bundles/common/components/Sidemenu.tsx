@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Badge } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
+import { routes } from '../../../routes';
 
 interface ButtonProps {
   color: string;
@@ -18,6 +19,7 @@ const SidemenuButton: React.FC<ButtonProps> = ({ color }) => {
 
 const Sidemenu: React.FC = () => {
   const [showPopover, setShow] = useState(false);
+  const history = useHistory();
 
   return (
     <div  onMouseEnter={() => setShow(true)}
@@ -33,8 +35,8 @@ const Sidemenu: React.FC = () => {
               <h3 className="side_popover__title">Me</h3>
               <div className="side_popover__right">
                 <button className="side_popover__button"/>
-                <button className="side_popover__button">
-                  <span className="fas fa-plus"></span>
+                <button className="side_popover__button" onClick={() => {history.push('/projects/new');}}>
+                  <span className="fas fa-plus"/>
                 </button>
               </div>
             </div>
@@ -44,7 +46,7 @@ const Sidemenu: React.FC = () => {
               </li>
               <li>
                 <Link to="/tasks">My Tasks</Link>
-                <Badge variant="primary" pill>1</Badge>
+                {/*<Badge variant="primary" pill>1</Badge>*/}
               </li>
             </ul>
           </div>

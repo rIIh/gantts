@@ -6781,6 +6781,11 @@ jest@24.9.0:
     import-local "^2.0.0"
     jest-cli "^24.9.0"
 
+jquery-connections@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/jquery-connections/-/jquery-connections-1.0.1.tgz#5a4d126eed4ed085158f80b180b96571a6f05a14"
+  integrity sha512-E1UvkxVIECfXY71fdzOVARtRDVNTKK5LmJ+WFBVIzQDDQYaa6VdJ1rMjI0t8Xm+p7qiEM7mZj45zv+2f6ePhaw==
+
 js-base64@^2.1.8:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-2.5.1.tgz#1efa39ef2c5f7980bb1784ade4a8af2de3291121"
@@ -9631,6 +9636,11 @@ react-fast-compare@^2.0.1:
   resolved "https://registry.yarnpkg.com/react-fast-compare/-/react-fast-compare-2.0.4.tgz#e84b4d455b0fec113e0402c329352715196f81f9"
   integrity sha512-suNP+J1VU1MWFKcyt7RtjiSWUjvidmQSlqu+eHslq+342xCbGTYmC0mEhPCOHxlW0CywylOC1u2DFAT+bv4dBw==
 
+react-firebase-hooks@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/react-firebase-hooks/-/react-firebase-hooks-2.1.1.tgz#7180b86e4bd8e33699003a41e6d33f280a54319a"
+  integrity sha512-6ZvAUa5q1JJrTQxCEKCXrP6S/en3B65RAYRYHbbjUh9f1BgKPsxkdaGGBPhGKuVSLUrVqTm8PtpZ/LCtAFogKA==
+
 react-is@^16.3.2, react-is@^16.6.0, react-is@^16.7.0, react-is@^16.8.1, react-is@^16.8.4, react-is@^16.9.0:
   version "16.12.0"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.12.0.tgz#2cc0fe0fba742d97fd527c42a13bec4eeb06241c"
@@ -9792,6 +9802,11 @@ react-transition-group@^4.0.0, react-transition-group@^4.3.0:
     dom-helpers "^5.0.1"
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
+
+react-use-gesture@^7.0.2:
+  version "7.0.2"
+  resolved "https://registry.yarnpkg.com/react-use-gesture/-/react-use-gesture-7.0.2.tgz#30b4dd8b7a874cb09a29ae423be8a1741bf30eef"
+  integrity sha512-D4l7F5FxJtDiLEpN5iuQlI40fUKnF4xr4jFjJy6LkL2IQwWkmOQmh/NGh85ILnsQgfoxCSDq5PrH5Mgwv1bF2w==
 
 react@^16.12.0:
   version "16.12.0"

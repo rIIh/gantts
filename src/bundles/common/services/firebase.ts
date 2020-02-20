@@ -13,21 +13,29 @@ const firebaseConfig = {
 
 const FirebaseInstance = firebase.initializeApp(firebaseConfig);
 export const FirebaseAuth = FirebaseInstance.auth();
-const _FirebaseCloud = FirebaseInstance.firestore();
+export const FirestoreApp = FirebaseInstance.firestore();
+
+export function attachID<Return, Snapshot = Return>(document: firebase.firestore.DocumentSnapshot<Snapshot>) {
+  return { ...document.data(), uid: document.id } as unknown as Return;
+}
+
 export class FirebaseCloud {
-  static root = _FirebaseCloud;
-  static projects = _FirebaseCloud.collection('projects');
-  static taskGroups = (projectID: ProjectID) => _FirebaseCloud.collection(`/projects/${projectID}/task_groups`);
-  static tasks = (projectID: ProjectID, taskGroupID: TaskGroupID) => 
-    _FirebaseCloud.collection(`/projects/${projectID}/task_groups/${taskGroupID}/tasks`);
+  static root = FirestoreApp;
+  static projects = FirestoreApp.collection('projects');
+  static projectInvites = (projectID: ProjectID) => FirebaseCloud.projects.doc(projectID).collection('invites');
+  static companies = FirestoreApp.collection('companies');
+  static companyInvites = (companyID: string) =>  FirestoreApp.collection('companies').doc(companyID).collection('invites');
+  static taskGroups = (projectID: ProjectID) => FirestoreApp.collection(`/projects/${projectID}/task_groups`);
+  static tasks = (projectID: ProjectID, taskGroupID: TaskGroupID) =>
+    FirestoreApp.collection(`/projects/${projectID}/task_groups/${taskGroupID}/tasks`);
   // static taskGroups = (projectID: string) => _FirebaseCloud.collectionGroup('task_groups').where('projectID', '==', projectID);
   // static tasks = (taskGroupID: TaskGroupID) => _FirebaseCloud.collectionGroup('tasks').where('parentGroupID', '==', taskGroupID);
   // static taskGroups = (projectID: string) => _FirebaseCloud.collectionGroup('task_groups').where('').collection('tasks_groups');
-  static users = _FirebaseCloud.collection('users');
+  static users = FirestoreApp.collection('users');
 }
 
 FirebaseAuth.onAuthStateChanged(user => {
-  console.log('auth state changed');
+  console.log('Firebase: Auth state changed');
   if (user) {
     localStorage.setItem('myPage.expectSignIn', '1');
   } else {

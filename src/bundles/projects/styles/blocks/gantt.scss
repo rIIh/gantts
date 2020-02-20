@@ -1,5 +1,8 @@
+$grey: #eaeaea;
+$newWeek: #ccc;
+
 .gantt {
-  $gantt_atom_height: 32px;
+  $gantt_atom_height: 24px;
 
   position: relative;
   height: 100%;
@@ -9,15 +12,21 @@
     height: $gantt_atom_height;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 12px;
+
+    &_title {
+      flex: 1 0 auto;
+    }
+
+    &_progress, &_assigns {
+      height: 100%;
+    }
 
     &--group {
       background-color: #efefef;
     }
 
     &--active {
-      background-color: lightgrey;
+      background-color: $grey;
     }
   }
 
@@ -38,9 +47,21 @@
   }
 
   &__meta_panel {
+    position: relative;
     background-color: white;
-    border-right: 1px solid grey;
-    flex: 1 0 512px;
+    border-right: 1px solid $grey;
+    flex: 1 0 600px;
+
+    &_toolbar {
+      padding-left: 2rem;
+      height: $gantt_atom_height;
+      display: flex;
+      align-items: center;
+
+      > :not(:last-child) {
+        margin-right: 0.5rem;
+      }
+    }
   }
 
   &__calendar_wrapper {
@@ -57,6 +78,15 @@
       display: flex;
       flex: 1 0 auto;
     }
+
+    &_selection {
+      position: absolute;
+      top: (24*4)px;
+      height: $gantt_atom_height;
+      background-color: $grey;
+      left: 0;
+      right: 0;
+    }
   }
 
   &__calendar_atom_group {
@@ -64,9 +94,9 @@
 
     &_header {
       position: absolute;
-      top: 20px;
-      height: 12px;
-      background-color: grey;
+      top: 12px;
+      height: $gantt_atom_height / 2;
+      background-color: $grey;
       border-radius: 4px;
       width: 100%;
       transition: all 400ms;
@@ -76,13 +106,6 @@
         top: 32px;
       }
     }
-
-    &_task {
-      position: absolute;
-
-      height: $gantt_atom_height;
-      background-color: lightblue;
-    }
   }
 
   &__calendar_atom {
@@ -90,20 +113,14 @@
     top: 32px * 3;
     height: $gantt_atom_height;
     background-color: red;
-    width: 100px;
     border-radius: 4px;
-
-    &--ghost {
-      opacity: 0.2;
-      z-index: 200;
-      pointer-events: none;
-    }
+    cursor: pointer;
   }
 
   &__calendar_month {
     display: flex;
     flex-flow: column nowrap;
-    border-right: 1px grey solid;
+    border-right: 1px $newWeek solid !important;
     box-sizing: border-box;
   }
 
@@ -113,23 +130,25 @@
     justify-content: center;
     align-items: center;
     margin: 0;
-    border-bottom: 1px solid lightgrey;
+    border-bottom: 1px solid $grey;
   }
 
   &__calendar_column {
     height: 100%;
     width: 29px;
     flex: 0 0 auto;
+    font-size: 11px;
+    padding: 4px 0 0;
     box-sizing: border-box;
     text-align: center;
+    color: #555960;
 
-
-    &:not(:first-child) {
-      border-left: 1px solid lightgrey;
+    &:not(&--last_in_week):not(:last-child) {
+      border-right: 1px solid $grey;
     }
 
     &--last_in_week:not(:last-child) {
-      border-right: 1px solid grey;
+      border-right: 1px solid $newWeek;
     }
   }
 }

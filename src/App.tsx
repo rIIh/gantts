@@ -1,24 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { Route, Switch, useHistory } from 'react-router';
-import { useSelector } from 'react-redux';
 import Header from './bundles/common/components/Header';
 import { routes } from './routes';
-import { UserState } from './bundles/user/types';
 import { expectSignIn } from './bundles/common/services/firebase';
-import { Overlay, Spinner, Container, Row, Col } from 'react-bootstrap';
-import Sidemenu from './bundles/common/components/Sidemenu';
-import { ProjectsState } from './bundles/projects/types/index';
+import { Overlay, Spinner, Row, Col, Alert, Modal } from 'react-bootstrap';
+import SideMenu from './bundles/common/components/Sidemenu';
+import { useTypedSelector } from './redux/rootReducer';
+import _ from 'lodash';
+import { useDispatch } from 'react-redux';
+import { appActions } from './bundles/common/store/actions';
 
 const AppLayout: React.FC = () => {
-  const { user, isLoading } = useSelector<{ userState: UserState }, UserState>((state) => state.userState);
-  const { isLoading: projectsLoading } = useSelector<{ projectsState: ProjectsState }, ProjectsState>((state) => state.projectsState);
+  const { activeModal } = useTypedSelector(state => state.app);
+  const { user, isLoading, isFailed, message } = useTypedSelector((state) => state.userState);
+  const dispatch = useDispatch();
+  const { isLoading: projectsLoading } = useTypedSelector((state) => state.projectsState);
   const history = useHistory();
   const [isLoaded, setLoaded] = useState(false);
   useEffect(() => {
     setTimeout(() => setLoaded(true), 2000);
   }, []);
   useEffect(() => {
-    if (!expectSignIn() && !user && !/^\/(signup|login)$/i.test(history.location.pathname)){
+    if (!expectSignIn() && !user && !/^\/(signup.*|login)$/i.test(history.location.pathname)){
       history.push('/login');
     };
   }, [user, history]);
@@ -39,10 +42,13 @@ const AppLayout: React.FC = () => {
         <Spinner animation="grow"/>
       </div>
     </Overlay>
-    { isLoaded &&
+    <Modal show={!_.isNil(activeModal)} onHide={() => dispatch(appActions.hideActiveModal())}>
+      { activeModal }
+    </Modal>
+    { isLoaded && !isFailed &&
     <Row noGutters className="page">
       <Col className="flex-shrink-1 flex-grow-0" >
-        { user && <Sidemenu/> }
+        { user && <SideMenu/> }
       </Col>
       <Col className="page__content" style={{ display: 'flex', flexFlow: 'column' }}>
         { user && <Header/> }
@@ -52,6 +58,9 @@ const AppLayout: React.FC = () => {
       </Col>
     </Row>
     }
+    { isFailed && (
+        <Alert variant="danger">{ message }</Alert>
+    ) }
   </>;
 };
 
