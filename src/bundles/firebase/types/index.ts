@@ -3,6 +3,7 @@ import { ExtraUserInfo } from '../../user/types';
 import { attachID, FirestoreApp } from '../../common/services/firebase';
 import { LazyProject } from '../../projects/types';
 import _ from 'lodash';
+import { CachedQueriesInstance } from '../cache';
 
 export type DocumentReference = firebase.firestore.DocumentReference;
 export const DocumentReference = firebase.firestore.DocumentReference;
@@ -18,11 +19,6 @@ export const FieldPath = firebase.firestore.FieldPath;
 export interface DocumentReferencePath {
   path: string;
   uid: string;
-}
-
-interface QueryState<T> {
-  value: T | null;
-  listeners: ((data: any) => void)[];
 }
 
 abstract class SubjectObject<Value> {
@@ -42,85 +38,6 @@ abstract class SubjectObject<Value> {
     this.listeners.splice(this.listeners.indexOf(callback), 1);
   }
 }
-
-class FirestoreCache {
-  cachedCollectionQueries: Map<CollectionReference, QueryState<Map<string, any>>> = new Map<CollectionReference, QueryState<Map<string, any>>>();
-  cachedDocumentQueries: Map<DocumentReference, QueryState<any>> = new Map<DocumentReference, QueryState<any>>();
-  
-  subscribe(reference: CollectionReference, callback: (data: any) => void): Disposer {
-    let state = this.cachedCollectionQueries.get(reference);
-    if (state) {
-      state.listeners.push(callback);
-      callback([...state.value?.values() ?? []]);
-    } else {
-      state = {
-        value: null,
-        listeners: [callback],
-      };
-      this.cachedCollectionQueries.set(reference, state);
-      state.value = new Map();
-      reference.onSnapshot(snapshot => {
-        const changes = snapshot.docChanges();
-        if (snapshot.empty && !changes.some(ch => ch.type == 'removed')) {
-          return;
-        }
-        changes.forEach(change => {
-          switch (change.type) {
-            case 'modified':
-            case 'added': {
-              state!.value!.set(change.doc.id, change.doc.data());
-              break;
-            }
-            case 'removed': {
-              state!.value!.delete(change.doc.id);
-            }
-          }
-        });
-        state!.listeners.forEach(listener => listener([...state!.value!.values()]));
-      });
-    }
-    return () => this.unsubscribe(reference, callback);
-  }
-  
-  subscribeSingle(reference: DocumentReference, callback: (data: any) => void): Disposer {
-    let state = this.cachedDocumentQueries.get(reference);
-    if (state) {
-      state.listeners.push(callback);
-      callback(state.value);
-    } else {
-      state = {
-        value: null,
-        listeners: [callback],
-      };
-      this.cachedDocumentQueries.set(reference, state);
-      reference.onSnapshot(snapshot => {
-        if (state) {
-          state.value = snapshot.data() ?? null;
-        }
-        state!.listeners.forEach(listener => listener(state?.value));
-      });
-    }
-    return () => this.unsubscribeSingle(reference, callback);
-  }
-  
-  unsubscribeSingle(reference: DocumentReference, callback: (data: any) => void) {
-    const state = this.cachedDocumentQueries.get(reference);
-    state?.listeners?.splice(state.listeners.indexOf(callback), 1);
-    if (state?.listeners.length == 0) {
-      this.cachedDocumentQueries.delete(reference);
-    }
-  }
-  
-  unsubscribe(reference: CollectionReference, callback: (data: any) => void) {
-    const state = this.cachedCollectionQueries.get(reference);
-    state?.listeners?.splice(state.listeners.indexOf(callback), 1);
-    if (state?.listeners.length == 0) {
-      this.cachedCollectionQueries.delete(reference);
-    }
-  }
-}
-
-const CachedQueriesInstance = new FirestoreCache();
 
 export class LazyReference<Value, Data extends DocumentData = Value> extends SubjectObject<Value> {
   private reference: DocumentReference;
@@ -166,7 +83,7 @@ export class LazyReference<Value, Data extends DocumentData = Value> extends Sub
   }
   
   connect() {
-    this.disconnect = CachedQueriesInstance.subscribeSingle(this.reference, data => {
+    this.disconnect = CachedQueriesInstance.listenDocument(this.reference, data => {
       this.value = data;
       this.listeners.forEach(listener => listener(this.value!));
     });
@@ -205,7 +122,7 @@ export class LazyCollectionReference<Value, Data extends DocumentData = Value> e
         return this.value;
       } else {
         return new Promise(resolve => {
-          const unsubscribe = CachedQueriesInstance.subscribe(this.reference, data => {
+          const unsubscribe = CachedQueriesInstance.listenCollection(this.reference, data => {
             resolve(data);
             unsubscribe();
           });
@@ -234,7 +151,7 @@ export class LazyCollectionReference<Value, Data extends DocumentData = Value> e
   private disconnect?: Disposer;
   connect() {
     if (this.connected) { return this; }
-    this.disconnect = CachedQueriesInstance.subscribe(this.reference, data => {
+    this.disconnect = CachedQueriesInstance.listenCollection(this.reference, data => {
       this.value = data;
       this.listeners.forEach(listener => listener(this.value!));
     });

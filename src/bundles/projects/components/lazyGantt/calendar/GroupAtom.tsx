@@ -35,7 +35,7 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
       const [dataRange, setDates] = useState<DateRange | null>(null);
       const initialized = dataRange != null;
       const { atomElements, setAtomRef } = useContext(CalendarContext);
-  
+      const [hasAnchor, setAnchor] = useState(false);
       const { project, sharedState, writeSharedState } = useContext(LGanttContext)!;
       const shared = sharedState.get(group.uid) as { collapsed?: boolean };
       
@@ -53,6 +53,7 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
       
       useEffect(() => {
         let metaTarget = document.getElementById(uid!);
+        if (metaTarget) { setAnchor(true); }
         setOffset(metaTarget?.offsetTop);
       }, [atomElements]);
   
@@ -137,6 +138,7 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
         console.log(minimum, maximum);
       }, [tasks, dragState]);
       
+      if (!hasAnchor) { return null; }
       
       return <>
         <AtomWrapper selected={selected}

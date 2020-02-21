@@ -9,9 +9,9 @@ export class GanttTheme implements DefaultTheme {
   dangerColor = '#ed8484';
   colWidth: number = 29;
   meta_columns: { [key: string]: number } = {
-    extra: 80,
-    assigns: 120,
-    progress: 72,
+    extra: 105,
+    assigns: 125,
+    progress: 70,
   };
   colors = {
     lightgrey: '#eaeaea',
