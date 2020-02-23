@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { ToggleButtonGroup, ToggleButton } from 'react-bootstrap';
 import { useField } from 'formik';
 
@@ -25,6 +25,22 @@ const BitMaskInput: React.FC<BitMaskInputProps> = ({ bitmask, name }) => {
     { flags.map((entry: any) => (
       <ToggleButton key={entry[1]} value={entry[1]}>{ entry[0] }</ToggleButton>
     )) }  
+  </ToggleButtonGroup>;
+};
+
+const FormikBitMaskInput: React.FC<{ bitmask: any; initialValue?: number }> = ({ bitmask, initialValue }) => {
+  const [state, setState] = useState(initialValue ?? 0);
+  useEffect(() => setState(initialValue ?? 0), [initialValue]);
+  const flags = Object.entries(bitmask).filter(e => !isNumber(e[0]) && e[1] as number > 0 && e[1] != 254);
+  
+  return <ToggleButtonGroup
+      type="checkbox"
+      className="d-block"
+      value={bitmaskValues(state, flags.map(flag => flag[1] as number))}
+      onChange={(values: number[]) => setState(values.length > 0 ? reduceToBitmask(values) : state)}>
+    { flags.map((entry: any) => (
+        <ToggleButton key={entry[1]} value={entry[1]}>{ entry[0] }</ToggleButton>
+    )) }
   </ToggleButtonGroup>;
 };
 

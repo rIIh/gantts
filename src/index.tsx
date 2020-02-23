@@ -3,8 +3,10 @@ import ReactDOM from 'react-dom';
 import './bundles/common/styles/index.scss';
 import './bundles/formik-bootstrap/styles/index.scss';
 import './bundles/user/styles/index.scss';
+import './bundles/bootstrap/styles/index.scss';
 import 'datejs';
 import './bundles/projects/utils/index';
+import './bundles/datepicker/styles.scss';
 import Main from './Main';
 import * as serviceWorker from './serviceWorker';
 import { createBrowserHistory } from 'history';
@@ -15,7 +17,7 @@ import { FirebaseAuth } from './bundles/common/services/firebase';
 import projectActions from './bundles/projects/redux/actions';
 import { composeWithDevTools } from 'redux-devtools-extension';
 import { initUser } from './bundles/user/redux/thunks';
-import { docReads } from './bundles/firebase/hooks/useSimpleReference';
+import registerDev from './serviceWorkerDev';
 
 const history = createBrowserHistory();
 
@@ -37,4 +39,5 @@ ReactDOM.render(<Main history={history} store={store}/>, document.getElementById
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+registerDev();
+// serviceWorker.register();

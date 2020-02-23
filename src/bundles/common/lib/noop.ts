@@ -1,1 +1,1 @@
-export const noop = (...props: any[]): any => {};
+export const noop = (...props: any[]): any => null;
