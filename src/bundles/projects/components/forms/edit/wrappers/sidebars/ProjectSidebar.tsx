@@ -1,20 +1,27 @@
 import { Form, OverlayTrigger, ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import ReactDatePicker from 'react-datepicker';
-import { BitMaskInput } from '../../../../../formik-bootstrap/components/FormikBitMaskInput';
-import { WeekBitMask } from '../../../../types';
-import React from 'react';
-import { DestroyPopover } from '../styled/Body';
+import { BitMaskInput } from '../../../../../../formik-bootstrap/components/FormikBitMaskInput';
+import { LazyProject, ProjectState, WeekBitMask } from '../../../../../types';
+import React, { useEffect, useState } from 'react';
+import { DestroyPopover } from '../../styled/Body';
+import _ from 'lodash';
 
-const ProjectSidebar = () => {
+type Model = Pick<LazyProject, 'state' | 'startDate' | 'daysInWeekBitMask'>;
+
+export const ProjectSidebar: React.FC<{ model: Model; onDestroyRequest?: () => void; onChange?: (newVal: Model) => void }> = ({ model, onDestroyRequest, onChange }) => {
+  const [local, setState] = useState(model);
+  useEffect(() => setState(model), [model]);
+  useEffect(() => { if (!_.isEqual(model, local)) { onChange?.(local); }}, [local]);
   return (
       <Form className="edit-project-overlay-sidebar">
         <h2 className="section-header">PROJECT SETTINGS</h2>
         <Form.Group>
           <label>Status</label>
-          <ToggleButtonGroup size="sm" type="radio" name="project_state" value={0}>
-            <ToggleButton variant="outline-secondary" value={0}>Active</ToggleButton>
-            <ToggleButton variant="outline-secondary" value={1}>On Hold</ToggleButton>
-            <ToggleButton variant="outline-secondary" value={2}>Completed</ToggleButton>
+          <ToggleButtonGroup size="sm" type="radio" name="project_state" value={local.state}
+                             onChange={(value: ProjectState) => setState(last => ({ ...last, state: value }))}>
+            <ToggleButton variant="outline-secondary" value={ProjectState.Active}>Active</ToggleButton>
+            <ToggleButton variant="outline-secondary" value={ProjectState.OnHold}>On Hold</ToggleButton>
+            <ToggleButton variant="outline-secondary" value={ProjectState.Complete}>Completed</ToggleButton>
           </ToggleButtonGroup>
         </Form.Group>
         {/*<div className="form-group">
@@ -34,7 +41,7 @@ const ProjectSidebar = () => {
           <div>
             <div className="react-datepicker-wrapper">
               <div className="react-datepicker__input-container">
-                <ReactDatePicker wrapperClassName="form-control" onChange={console.log}/>
+                <ReactDatePicker wrapperClassName="form-control" selected={local.startDate} onChange={date => setState(last => ({ ...last, startDate: date ?? last.startDate }))}/>
               </div>
             </div>
           </div>
@@ -47,16 +54,16 @@ const ProjectSidebar = () => {
               <ToggleButton variant="outline-secondary" value={1}>No</ToggleButton>
             </ToggleButtonGroup>
           </Form.Group>*/}
-        <Form.Group>
+        {/*<Form.Group>
           <label>Allow Scheduling on Holidays</label>
           <ToggleButtonGroup size="sm" type="radio" name="Scheduling on holidays" value={0}>
             <ToggleButton variant="outline-secondary" value={0}>Yes</ToggleButton>
             <ToggleButton variant="outline-secondary" value={1}>No</ToggleButton>
           </ToggleButtonGroup>
-        </Form.Group>
+        </Form.Group>*/}
         <Form.Group>
           <label>Days in Week</label>
-          <BitMaskInput shrink={3} bitmask={WeekBitMask}/>
+          <BitMaskInput shrink={3} bitmask={WeekBitMask} initialValue={local.daysInWeekBitMask} onChange={result => setState(last => ({ ...last, daysInWeekBitMask: result }))}/>
         </Form.Group>
         {/*<div className="form-group">
             <label>Export</label>
@@ -83,16 +90,18 @@ const ProjectSidebar = () => {
                     </div>
                   </span>
                 <div className="confirm-actions">
-                  <button className="confirm-action-confirm tg-button tg-button--primary tg-button--x-small tg-button--summer-heat" type="button">Yes,
-                                                                                                                                                  Delete
+                  <button className="confirm-action-confirm tg-button tg-button--primary tg-button--x-small tg-button--summer-heat"
+                          onClick={() => { onDestroyRequest?.(); document.body.click(); }}
+                          type="button">Yes,  Delete
                   </button>
-                  <button className="confirm-action-cancel tg-button tg-button--text-complimentary tg-button--x-small" type="button">Never mind
+                  <button className="confirm-action-cancel tg-button tg-button--text-complimentary tg-button--x-small" type="button"
+                          onClick={e => document.body.click()}>Never mind
                   </button>
                 </div>
               </div>
             </DestroyPopover>
         )}>
-          <button className="link warning underlined delete-link" style={{ color: '#FF8063' }}>Delete Project</button>
+          <button className="link warning underlined delete-link" onClick={e => e.preventDefault()} style={{ color: '#FF8063' }}>Delete Project</button>
         </OverlayTrigger>
       </Form>
   );

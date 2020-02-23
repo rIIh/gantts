@@ -3,7 +3,6 @@ import { Container, Row, Col, Popover, OverlayTrigger } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { UserState } from '../../user/types';
 import { logoutThunk } from '../../user/redux/thunks';
-import { useHistory } from 'react-router';
 import { UserPic } from '../../user/components/UserPic';
 import { Link } from 'react-router-dom';
 
@@ -44,7 +43,7 @@ const Header: React.FC = () => {
             </Popover>
           }>
           <div className="header__user_dropdown user_dropdown">
-            { user && <UserPic clickable user={user} size={42}/> }
+            { user && <UserPic clickable userID={user.uid} size={42}/> }
           </div>
         </OverlayTrigger>
       </div>

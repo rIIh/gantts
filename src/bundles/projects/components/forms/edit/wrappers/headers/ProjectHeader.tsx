@@ -1,13 +1,14 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { LazyProject, LazyTaskGroup } from '../../../../types';
-import { Header } from '../Header';
-import { useTypedSelector } from '../../../../../../redux/rootReducer';
-import { Body } from '../Body';
+import { LazyProject, LazyTaskGroup } from '../../../../../types';
+import { useTypedSelector } from '../../../../../../../redux/rootReducer';
+import { ModelBody } from '../../ModelBody';
+import { ModelHeader } from '../../ModelHeader';
+import { useSimpleReference } from '../../../../../../firebase/hooks/useSimpleReference';
+import { useDebounce } from '../../../../../../common/hooks/lodashHooks';
+import { ProjectConverter } from '../../../../../firebase/project_converter';
 
 export const ProjectHeader: React.FC<{ project: LazyProject }> = ({ project }) => {
   const projectState = useTypedSelector(state => state.projectsState.calculatedProperties.get(project.uid));
-  return <>
-    <Header value={{ ...project, start: projectState?.start, end: projectState?.end, progress: projectState?.progress ?? 0 }}/>
-    <Body/>
-  </>;
+  const update = useDebounce(({ title }: Partial<LazyProject>) => title && title.length > 0 && project.selfReference().withConverter(ProjectConverter).update({ title }), 1000);
+  return project && <ModelHeader onChange={update} value={{ title: project.title, start: projectState?.start, end: projectState?.end, progress: projectState?.progress ?? 0 }}/>;
 };

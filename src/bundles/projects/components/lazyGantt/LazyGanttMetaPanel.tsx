@@ -34,6 +34,7 @@ const Header = styled.div`
 
 export const LazyGanttMetaPanel: React.FC<{ project: LazyProject }> = ({ project: _project }) => {
   const [project, setProject] = useState(_project);
+  useEffect(() => setProject(_project), [_project]);
   const [showToolbar, setToolbar] = useState(false);
   const bind = useHover(({ hovering }) => setToolbar(hovering));
   

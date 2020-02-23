@@ -4,12 +4,9 @@ import { FormControl, Modal, Row, Form, Col, Button, Figure, ListGroup, ListGrou
 import DatePicker from 'react-datepicker';
 import { Avatar, UserPic } from '../../../user/components/UserPic';
 import { UsersRow } from '../../../user/routes/AccountSettings';
-import { useCollectionReference } from '../../../firebase/hooks/useReference';
 import { useDispatch } from 'react-redux';
-import { appActions } from '../../../common/store/actions';
 import AssignForm, { AssignModal } from '../forms/AssignForm';
 import { CheckField, DropdownLink } from '../lazyGantt/LazyGanttHeader';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { LazyUserInfo } from '../../../user/types';
 import { useSimpleCollection, useSimpleReference } from '../../../firebase/hooks/useSimpleReference';
 import { DocumentReference } from '../../../firebase/types';
@@ -20,6 +17,7 @@ import cuid from 'cuid';
 import { fractionByTruth, prettyNum } from '../utils';
 import { ColorPill } from '../lazyGantt/styled';
 import { Colors, Palette } from '../../colors';
+import { useModal } from '../../../common/modal/context';
 
 interface Props {
   taskReference: DocumentReference;
@@ -71,6 +69,8 @@ export const TaskDetails: React.FC<Props> = ({ taskReference }) => {
     }
   }, [task, remoteProgress]);
   
+  const { showModal } = useModal(task && <AssignModal task={task} initialValue={assigned ?? undefined}/>);
+  
   if (!task || loading) { return <Spinner animation="grow" />; }
   
   return <>
@@ -94,9 +94,9 @@ export const TaskDetails: React.FC<Props> = ({ taskReference }) => {
         </Dropdown.Menu>
       </Dropdown>
       <UsersRow style={{ marginLeft: 'auto' }}>
-        {assigned?.map(user => <UserPic key={user.uid} withTooltip user={user}/>)}
+        {assigned?.map(user => <UserPic key={user.uid} withTooltip userID={user.uid}/>)}
         <Avatar size={32} style={{ backgroundColor: 'lightgrey', cursor: 'pointer' }}
-                onClick={() => dispatch(appActions.setActiveModal(<AssignModal task={task} initialValue={assigned ?? undefined}/>))}>
+                onClick={showModal}>
           <span className="fas fa-plus" style={{ margin: 'auto' }}/>
         </Avatar>
       </UsersRow>
@@ -104,11 +104,11 @@ export const TaskDetails: React.FC<Props> = ({ taskReference }) => {
     <Modal.Body>
       <Form.Row>
         <Form.Group as={Col} controlId="progress">
-          <Form.Label>Progress</Form.Label>
+          <Form.Label column={false}>Progress</Form.Label>
           <Form.Control type="text" placeholder="0%" value={`${prettyNum(remoteProgress ?? localProgress)}%`} onChange={progressChange}/>
         </Form.Group>
         <Form.Group as={Col} controlId="progress">
-          <Form.Label>Start</Form.Label>
+          <Form.Label column={false}>Start</Form.Label>
           <DatePicker
               selected={task.start}
               dateFormat="MMMM d, yyyy"
@@ -118,7 +118,7 @@ export const TaskDetails: React.FC<Props> = ({ taskReference }) => {
           />
         </Form.Group>
         <Form.Group as={Col} controlId="progress">
-          <Form.Label>End</Form.Label>
+          <Form.Label column={false}>End</Form.Label>
           <DatePicker
               selected={task.end}
               dateFormat="MMMM d, yyyy"

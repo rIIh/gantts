@@ -20,6 +20,9 @@ import { prettyNum } from '../../utils';
 import { DefaultCheckbox, FakeCheckbox } from '../styled';
 import { Button, Modal } from 'react-bootstrap';
 import { diffDays } from '../../../../date/date';
+import { useModal } from '../../../../common/modal/context';
+import { ProjectForm } from '../../forms/edit/wrappers/ProjectForm';
+import { TaskForm } from '../../forms/edit/wrappers/TaskForm';
 
 interface Props {
   task: LazyTask;
@@ -99,7 +102,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
     }
   }, [sharedState]);
   
-  const showTaskDetails = useCallback(() => dispatch(appActions.setActiveModal(task && <TaskDetails taskReference={task.selfReference()}/>)), [task]);
+  const { showModal: showTaskDetails } = useModal(task && <TaskDetails taskReference={task.selfReference()}/>);
   
   useEffect(() => {
     let needToHide = false;
@@ -164,10 +167,11 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
     }
   }, [filters]);
   
-  const [showAssignList, setAssignList] = useState(false);
   const assignRef = useRef<HTMLDivElement>(null);
-  const showAssignForm = useCallback(() => {
-    setAssignList(true);
+  const { showModal: showAssigneesModal, hideModal } = useModal(<AssignModal task={task} initialValue={assigned} onHide={() => hideModal()}/>,
+      { animation: false, dialogClassName: `a${task.uid}_assign_modal` });
+  const showAssigneesForm = useCallback(() => {
+    showAssigneesModal();
     requestAnimationFrame(() => {
       console.log(document.querySelector(`.a${task.uid}_assign_modal`));
       const doc = (document.querySelector(`.a${task.uid}_assign_modal`) as HTMLElement);
@@ -185,7 +189,9 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
         doc.style.setProperty(prop, val);
       }
     });
-  }, [task]);
+  }, [task, showAssigneesModal]);
+  
+  const { showModal } = useModal(<TaskForm task={task}/>, { size: 'xl', animation: false });
   
   if (sharedState.get(task.uid)?.hidden) { return null; }
   
@@ -200,7 +206,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
     <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 8px)` }}>
       {<span>{title}</span>}
       <span className="gantt__atom_meta_toolbar" style={{ display: isHovered ? undefined : 'none' }}>
-      <span className="badge toolbar__button link" onClick={showTaskDetails}>
+      <span className="badge toolbar__button link" onClick={showModal}>
         <span className="fas fa-pen"/>
       </span>
       <span className="badge toolbar__button link" onClick={() => {
@@ -217,15 +223,15 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
     </span>
     </MetaColumn>
     <MetaColumn ref={assignRef} type="assigns">
-      <AssignedList onClick={showAssignForm}>
+      <AssignedList onClick={showAssigneesForm}>
         {!assigned || assigned.length == 0 ?
             <AssignButton style={{ display: isHovered ? undefined : 'none' }}>assign</AssignButton> :
             assigned.map(user => <Assigned key={user.uid}>{user.displayName}</Assigned>)}
       </AssignedList>
     </MetaColumn>
-    <Modal show={showAssignList} animation={false} onHide={() => setAssignList(false)} dialogClassName={`a${task.uid}_assign_modal`}>
-      <AssignModal task={task} initialValue={assigned} onHide={() => setAssignList(false)}/>
-    </Modal>
+    {/*<Modal show={showAssignList} >*/}
+    {/*  <AssignModal task={task} initialValue={assigned} onHide={() => setAssignList(false)}/>*/}
+    {/*</Modal>*/}
     <MetaColumn type="progress" style={{ justifyContent: 'center' }}>
       { task.type == TaskType.Task ? (
           <input type="text" ref={progressRef} onClick={() => progressRef.current?.select()} style={{

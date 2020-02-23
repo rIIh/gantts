@@ -4,7 +4,7 @@ import { Formik } from 'formik';
 import { Project, WeekBitMask, ProjectCreator } from '../types';
 import InputField from '../../formik-bootstrap/components/InputField';
 import FormikDatePicker from '../../formik-bootstrap/components/DatePicker';
-import BitMaskInput from '../../formik-bootstrap/components/BitMaskInput';
+import FormikBitMaskInput from '../../formik-bootstrap/components/FormikBitMaskInput';
 import { useSelector, useDispatch } from 'react-redux';
 import { ProjectsState } from '../types/index';
 import { useHistory } from 'react-router';
@@ -22,7 +22,10 @@ const initialProject: ProjectCreator = {
   title: '',
   startDate: new Date(),
   comments: [],
-  daysInWeekBitMask: 
+  history: [],
+  documents: [],
+  note: '',
+  daysInWeekBitMask:
     WeekBitMask.Monday |
     WeekBitMask.Tuesday |
     WeekBitMask.Wednesday |
@@ -31,23 +34,21 @@ const initialProject: ProjectCreator = {
 };
 
 const NewProject: React.FC = () => {
-  const { lazy: projects, isLoading, isFailed, message } = useTypedSelector(state => state.projectsState);
+  const { isLoading, isFailed } = useTypedSelector(state => state.projectsState);
   const [isSubmitting, setSubmitting] = useState(false);
   const dispatch = useDispatch();
   const history = useHistory();
-  useEffect(() => isSubmitting && !isLoading && !isFailed ? 
-    history.push('/projects/' + projects[projects.length - 1].uid) : undefined, [isLoading]);
 
   return <Container className="py-5 page__container flex-grow-1">
     <h1>Create a New Project</h1>
     { isLoading ? 'Is loading' : '' }
-    { isFailed && <Alert variant="danger">{message}</Alert> }
+    { isFailed && <Alert variant="danger">{isFailed.message}</Alert> }
     <Formik initialValues={initialProject}
             validationSchema={Yup.object({
               title: Yup.string().required('Please enter project title'),
             })}
             onSubmit={async (project) => {
-              const promise = dispatch(createProject(project));
+              const promise = dispatch(createProject(project, (id) => history.push('/projects/'+id)));
               setSubmitting(true);
               await promise;
               console.log('done');
@@ -62,7 +63,7 @@ const NewProject: React.FC = () => {
             </Form.Group>
             <Form.Group>
               <Form.Label>Days in Week</Form.Label>
-              <BitMaskInput name="daysInWeekBitMask" bitmask={WeekBitMask}/>
+              <FormikBitMaskInput name="daysInWeekBitMask" bitmask={WeekBitMask}/>
               {/* <ToggleButtonGroup type="checkbox" onChange={(values: number[]) => console.log(values.reduce((acc, val) => {acc += val; return acc;}))}>
                 <ToggleButton variant="outline-secondary" value={WeekBitMask.Monday}>
                   { WeekBitMask[WeekBitMask.Monday] }

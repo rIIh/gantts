@@ -1,29 +1,132 @@
-import { FirebaseAuth, FirebaseCloud, FirestoreApp } from './../../common/services/firebase';
+import { FirebaseAuth } from './../../common/services/firebase';
 import { Dispatch } from 'react';
 import { ActionType } from 'typesafe-actions';
 import projectActions from './actions';
-import firebase from 'firebase';
-import _ from 'lodash';
-import Immutable from 'immutable';
-import {
-  Project,
-  ProjectCreator,
-  TaskConstructor,
-  LazyProject,
-  LazyTaskGroup, LazyTask,
-} from '../types';
-import { LazyUserInfo, UserInfo } from '../../user/types';
+import { LazyProject, LazyTask, LazyTaskGroup, ProjectCreator, ProjectState, SharedState } from '../types';
 import { projectCollections, projectReferences } from '../firebase';
 import { userReferences } from '../../user/firebase';
-import { LazyCollectionReference, LazyReference } from '../../firebase/types';
 import { UserConverter } from '../../user/firebase/converters/users';
-import { TaskGroupConverter } from '../firebase/project_converter';
+import { ProjectConverter, TaskGroupConverter } from '../firebase/project_converter';
+import { CachedQueriesInstance } from '../../firebase/cache';
+import { CollectionReference } from '../../firebase/types';
+import { ApplicationState } from '../../../redux/rootReducer';
+import { createInitialGroup } from './lib/createInitialGroup';
+import _ from 'lodash';
 
 type RootDispatch = Dispatch<ActionType<typeof projectActions>>;
+//
+// const loadDocuments = (project: string, bucket?: string) => {
+//   return async (dispatch: RootDispatch) => {
+//     const docs: ProjectDoc[] = (await documents(project, bucket).listAll()).items.map(ref => {
+//       CachedQueriesInstance.getOnce(projectReferences.documentsData(project).doc(md5(bucket + ref.)))
+//     });
+//     dispatch(projectActions.documentsReloaded({key: bucket, value:  }))
+//   };
+// };
 
-export const createProject = (project: ProjectCreator) => {
-  return async (dispatch: RootDispatch) => {
-    dispatch(projectActions.setLoading(true));
+const recalculateProjectTree = (project: string) => {
+  return function(dispatch: RootDispatch, getState: () => ApplicationState) {
+    const throttledDispatch = _.throttle(dispatch, 200, { leading: true });
+    const { groups, tasks } = getState().projectsState;
+    const projectGroups = groups.get(project);
+    const changes: { [key: string]: Partial<SharedState> } = {};
+    const apply = (key: string, value: Partial<SharedState>) => changes[key] = { ...changes[key], ...value };
+    
+    const calculateProgress = (group: LazyTaskGroup): number => {
+      const childGroups = groups.get(group.uid);
+      const childTasks = tasks.get(group.uid);
+      const count = (childGroups?.length ?? 0) + (childTasks?.length ?? 0);
+      const childrenProgress = childGroups && childGroups.length > 0 ? childGroups.map(group => calculateProgress(group)).reduce((acc, p) => acc + p) : 0;
+      const tasksProgress = childTasks && childTasks.length > 0 ? childTasks.map(task => task.progress ?? 0).reduce((acc, p) => acc + p) : 0;
+      const result = count > 0 ? (childrenProgress + tasksProgress) / count : 0;
+      console.log(result, childrenProgress, tasksProgress, count);
+      apply(group.uid, { progress: result });
+      // dispatch(projectActions.calculatedPropertiesUpdate({ key: group.uid, value: { progress: result } }));
+      return result;
+    };
+    
+    let projectProgress = projectGroups ? projectGroups.map(g => calculateProgress(g)).reduce((acc, p) => acc + p) / (projectGroups.length) : 0;
+    apply(project, { progress: projectProgress });
+    // throttledDispatch(projectActions.calculatedPropertiesUpdate({ key: project, value: { progress: projectProgress } }));
+    
+    const calculateDates = (group: LazyTaskGroup): [Date | undefined, Date | undefined] => {
+      const minimum = tasks?.get(group.uid)?.map(_task => _task.start).reduce((a, date) => {
+        if (a && date && a.compareTo(date) < 0 || !date) {
+          return a;
+        } else {
+          return date;
+        }
+      }, undefined);
+      const maximum = tasks?.get(group.uid)?.map(_task => _task.end).reduce((a, date) => {
+        if (a && date && a.compareTo(date) > 0 || !date) {
+          return a;
+        } else {
+          return date;
+        }
+      }, undefined);
+      apply(group.uid, { start: minimum, end: maximum });
+      // throttledDispatch(projectActions.calculatedPropertiesUpdate({ key: group.uid, value: { start: minimum, end: maximum } }));
+      return [minimum, maximum];
+    };
+    
+    let [minimumDate, maximumDate] = projectGroups?.map(g => calculateDates(g)).reduce((acc, dates) => {
+      if (acc[0] && acc[1]) {
+        if (dates[0] && dates[1]) {
+          return [acc[0].compareTo(dates[0]) < 0 ? acc[0] : dates[0], acc[1].compareTo(dates[1]) > 0 ? acc[1] : dates[1]];
+        } else {
+          return acc;
+        }
+      } else {
+        return dates;
+      }
+    }) ?? [undefined, undefined];
+    apply(project, { start: minimumDate, end: maximumDate });
+    console.log(changes);
+    dispatch(projectActions.calculatedPropertiesUpdateBatch(changes));
+    // throttledDispatch(projectActions.calculatedPropertiesUpdate({ key: project, value: { start: minimumDate, end: maximumDate } }));
+  };
+};
+
+const recalculate = _.debounce((dispatch, uid) => dispatch(recalculateProjectTree(uid)), 400);
+
+export const attachToProject = (project: LazyProject) => {
+  return (dispatch: RootDispatch, getState: () => ApplicationState) => {
+    const fetchTasks = (origin: { tasks: () => CollectionReference; uid: string }) => {
+      dispatch(projectActions.disposerCreated({
+        project: project.uid,
+        disposer: CachedQueriesInstance.listenCollection(origin.tasks(), (tasks: LazyTask[]) => {
+          dispatch(projectActions.tasksChanged({ parent: origin.uid, tasks }));
+          // @ts-ignore
+          recalculate(dispatch, project.uid);
+        }),
+      }));
+    };
+    const fetchGroups = (origin: { taskGroups: () => CollectionReference; uid: string }) => {
+      dispatch(projectActions.disposerCreated({
+        project: project.uid,
+        disposer: CachedQueriesInstance.listenCollection(origin.taskGroups(), (groups: LazyTaskGroup[]) => {
+          dispatch(projectActions.groupsChanged({ parent: origin.uid, groups }));
+            groups.forEach(group => {
+              fetchGroups(group);
+              fetchTasks(group);
+            });
+          // @ts-ignore
+          recalculate(dispatch, project.uid);
+        }),
+      }));
+    };
+    fetchGroups(project);
+    CachedQueriesInstance.getManyOnce(project.taskGroups()).then(groups => {
+      createInitialGroup.cancel();
+      if (groups.length == 0) {
+        createInitialGroup(project);
+      }
+    });
+  };
+};                                                                                                                              
+                                                                                                                               
+export const createProject = (project: ProjectCreator, onCreated: (id: string) => void) => {
+  return async (dispatch: RootDispatch) => {                                                                                    
     try {
       if (!FirebaseAuth.currentUser) {
         throw new Error('You are not authorized');
@@ -33,12 +136,12 @@ export const createProject = (project: ProjectCreator) => {
       const lazyProject: LazyProject = {
         uid: projectDoc.id,
         ...project,
-        selfReference: () => projectDoc,
+        documents: [],
+        state: ProjectState.Active,
+        selfReference: () => projectDoc.withConverter(ProjectConverter),
         owner: () => userReferences.users.doc(currentUser.uid),
         enrolled: () => projectReferences.projectEnrolled(projectDoc.id).withConverter(UserConverter),
         taskGroups: () => projectReferences.taskGroups(projectDoc.id).withConverter(TaskGroupConverter),
-        complete: false,
-        onHold: false,
       };
       await projectDoc.set(lazyProject);
       const initialGroupDoc = lazyProject.taskGroups().doc();
@@ -52,15 +155,12 @@ export const createProject = (project: ProjectCreator) => {
         comments: [],
         documents: [],
         history: [],
-        notes: [],
+        note: '',
       };
       await initialGroupDoc.set(initialGroup);
-      dispatch(projectActions.created(lazyProject));
+      onCreated(projectDoc.id);
     } catch(e) {
       console.log(e);
-      dispatch(projectActions.setFailed(e));
-    } finally {
-      dispatch(projectActions.setLoading(false));
-    }
+    } 
   };
 };

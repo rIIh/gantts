@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { connectElements } from '../../../../connections';
 import styled from 'styled-components';
 import { useTheme } from '../../../../styled-components/hooks/useTheme';
 import { random } from '../../../../common/lib/random';

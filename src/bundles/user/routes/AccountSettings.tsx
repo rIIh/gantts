@@ -85,7 +85,7 @@ export const CompanySettings: React.FC = () => {
       <Card id="enrolled-users">
         <Card.Body>
           <Card.Title>Users at company</Card.Title>
-          <UsersRow>{ usersAtCompany.map(user => <UserPic key={user.uid} user={user} withTooltip size={company?.owner.Reference.id === user.uid ? 42 : undefined}/>)}</UsersRow>
+          <UsersRow>{ usersAtCompany.map(user => <UserPic key={user.uid} userID={user.uid} withTooltip size={company?.owner.Reference.id === user.uid ? 42 : undefined}/>)}</UsersRow>
         </Card.Body>
         { company !== null && company.owner.Reference.id === user?.uid && (
             <Card.Footer>

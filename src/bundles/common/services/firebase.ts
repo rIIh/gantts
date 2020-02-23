@@ -14,6 +14,7 @@ const firebaseConfig = {
 const FirebaseInstance = firebase.initializeApp(firebaseConfig);
 export const FirebaseAuth = FirebaseInstance.auth();
 export const FirestoreApp = FirebaseInstance.firestore();
+export const FireStorage = FirebaseInstance.storage();
 
 export function attachID<Return, Snapshot = Return>(document: firebase.firestore.DocumentSnapshot<Snapshot>) {
   return { ...document.data(), uid: document.id } as unknown as Return;

@@ -71,7 +71,6 @@ export const LazyGantt: React.FC<LGanttProps & PropsWithConfig> = ({
     },
   }}>
     <ThemeProvider theme={config ?? new GanttTheme()}>
-      
       <LazyGanttHeader onAssignedFilter={onAssignedFilter} onDateFilter={setDateFilter}/>
       <div className="gantt">
         <LazyGanttMetaPanel project={project}/>

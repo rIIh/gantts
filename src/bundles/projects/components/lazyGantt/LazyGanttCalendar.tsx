@@ -14,6 +14,7 @@ import { useMultiCollection, useSimpleCollection } from '../../../firebase/hooks
 import styled, { css } from 'styled-components';
 import { ProjectLine } from './calendar/ProjectLine';
 import { LGanttContext } from './LazyGantt';
+import { useTypedSelector } from '../../../../redux/rootReducer';
 
 interface CalendarContextType {
   atomElements: Map<string, HTMLElement>;
@@ -49,12 +50,11 @@ const DateColumn = styled.div<{ lastInWeek?: boolean; isToday?: boolean; isWeeke
   text-align: center;
   color: #555960;
   
-  ${props => (props.isToday) && css`
-    background-color: ${({ theme }) => theme.colors.lightgrey};
-  `}
-  
   ${props => (props.isWeekend) && css`
     background-color: ${({ theme }) => theme.colors.weekend};
+  `}
+  ${props => (props.isToday) && css`
+    background-color: ${({ theme }) => theme.colors.lightgrey};
   `}
   
   &:not(:last-child) {
@@ -75,7 +75,6 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
   const calendarContainer = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const size = useComponentSize(calendarContainer);
-  const { sharedState } = useContext(LGanttContext)!;
   const endDateCandidate = startDate.clone().addMonths(2);
   const [endMonth, setEndMonth] = useState(endDateCandidate.clone().moveToLastDayOfMonth().compareTo(Date.today()) < 0 ? Date.today().moveToLastDayOfMonth() : endDateCandidate);
   const [lastDayInWeek, setLastDayInWeek] = useState(-1);
@@ -83,6 +82,7 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
   const [iterableDate, setIterableDate] = useState<IterableDate>();
   const [groups, loading, error] = useSimpleCollection<LazyTaskGroup>(project.taskGroups());
   const [tasks] = useMultiCollection<LazyTask>(groups?.map(g => g.tasks()));
+  const projectState = useTypedSelector(state => state.projectsState.calculatedProperties.get(project.uid));
   
   useTraceUpdate({ tasks, groups });
   
@@ -115,7 +115,7 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
   
   useEffect(() => {
     setIterableDate(new IterableDate(startDate.clone(), endMonth));
-  }, [endMonth]);
+  }, [endMonth, startDate]);
   
   useEffect(() => {
     if (weekMask == WeekBitMask.All) {
@@ -196,31 +196,20 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
   },[setAtomElements, atomElements]);
   
   const getProjectDates = useMemo((): { left: number; width: number } | null => {
-    let minDate: Date | null = null;
-    let maxDate: Date | null = null;
-    for (let group of groups) {
-      const state = sharedState.get(group.uid) as { start: Date | null; end: Date | null };
-      if (state && state.start && state.end) {
-        if (!minDate || minDate.compareTo(state.start) > 0) {
-          minDate = state.start;
-        }
-        if (!maxDate || maxDate.compareTo(state.end) < 0) {
-          maxDate = state.end;
-        }
-      }
-    }
-    
-    console.log('dates updated', minDate?.toDateString(), maxDate?.toDateString());
+    let minDate: Date | undefined = projectState?.start;
+    let maxDate: Date | undefined = projectState?.end;
     
     if (minDate && maxDate) {
       const startCol = getDateColumn(minDate);
       const endCol = getDateColumn(maxDate);
-      const left = startCol.offsetLeft;
-      const width = endCol.offsetLeft + endCol.clientWidth - startCol.offsetLeft;
-      return { left, width };
+      if (startCol && endCol) {
+        const left = startCol.offsetLeft;
+        const width = endCol.offsetLeft + endCol.clientWidth - startCol.offsetLeft;
+        return { left, width };
+      }
     }
     return null;
-  }, [sharedState, groups]);
+  }, [projectState, iterableDate]);
   
   useEffect(
       () => { setTimeout(() => calendarContainer

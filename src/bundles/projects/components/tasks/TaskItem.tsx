@@ -3,7 +3,7 @@ import { LazyTask } from '../../types';
 import { LazyReference } from '../../../firebase/types';
 import { useCollectionReference, useReference } from '../../../firebase/hooks/useReference';
 import styled from 'styled-components';
-import { FormCheck } from 'react-bootstrap';
+import { FormCheck, Modal } from 'react-bootstrap';
 import { clamp } from '../../../common/lib/clamp';
 import _ from 'lodash';
 import { Warning } from '../../../common/components/Warning';
@@ -16,6 +16,7 @@ import { TaskDetails } from './TaskDetails';
 import { LazyUserInfo } from '../../../user/types';
 import { useSimpleCollection, useSimpleReference } from '../../../firebase/hooks/useSimpleReference';
 import { fractionByTruth, prettyNum } from '../utils';
+import { useModal } from '../../../common/modal/context';
 
 interface Props {
   task: LazyReference<LazyTask>;
@@ -171,8 +172,7 @@ export const TaskItem: React.FC<Props> = ({ task }) => {
   const [remoteProgress, setProgress] = useState(taskData?.progress);
   const [localProgress, setLocalProgress] = useState(0);
   const progressRef = useRef<HTMLInputElement>(null);
-  const dispatch = useDispatch();
-  const showTaskDetails = useCallback(() => dispatch(appActions.setActiveModal(taskData && <TaskDetails taskReference={taskData.selfReference()}/>)), [taskData]);
+  const { showModal } = useModal(taskData && <TaskDetails taskReference={taskData.selfReference() || null}/>);
   useEffect(() => { console.log(progressRef.current); if (remoteProgress == undefined) { progressRef.current?.blur(); } }, [remoteProgress]);
   useEffect(() => setProgress(taskData?.progress), [taskData]);
   useEffect(() => setLocalProgress(fractionByTruth(taskData?.subtasks ?? [], e => e.completed) * 100), [taskData]);
@@ -183,9 +183,9 @@ export const TaskItem: React.FC<Props> = ({ task }) => {
   return <Item >
     <Warning message={error?.message}/>
     <ProgressBar progress={remoteProgress ?? localProgress} ref={progressRef} dates={taskData && taskData.start ? { start: taskData.start!, end: taskData.end! } : undefined} onChange={setProgress}/>
-    <p onClick={showTaskDetails}>{ taskData?.title }</p>
+    <p onClick={showModal}>{ taskData?.title }</p>
     <UsersRow style={{ marginLeft: 'auto' }}>
-      { assigned?.map(user => <UserPic key={user.uid} withTooltip user={user}/>)}
+      { assigned?.map(user => <UserPic key={user.uid} withTooltip userID={user.uid}/>)}
     </UsersRow>
   </Item>;
 };

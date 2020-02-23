@@ -1,14 +1,16 @@
 import { createAsyncAction, createAction } from 'typesafe-actions';
-import { Project, Task, ProjectID, TaskGroupID, LazyProject } from '../types';
+import { Project, Task, ProjectID, TaskGroupID, LazyProject, LazyTaskGroup, LazyTask, SharedState, RemoteDocument } from '../types';
 
 const projectActions = {
-  setLoading: createAction('Set_Loading')<boolean>(),
-  setFailed: createAction('Set_Failed')<Error>(),
-  clear: createAction('Clear_Projects_State')<void>(),
-  projectsFetched: createAction('Projects_Fetched')<{ projects: LazyProject[] }>(),
-  created: createAction('Project_Created')<LazyProject>(),
-  updated: createAction('Project_Updated')<LazyProject>(),
-  destroyed: createAction('Project_Destroyed')<string>(),
+  documentsReloaded: createAction('Docs_Fetched')<{ key: string; value: RemoteDocument[] }>(),
+  calculatedPropertiesUpdate: createAction('Recalculated')<{ key: string; value: Partial<SharedState> }>(),
+  calculatedPropertiesUpdateBatch: createAction('Recalculated_Batch')<{ [key: string]: Partial<SharedState> }>(),
+  disposerCreated: createAction('Disposer_Created')<{ project: string; disposer: () => void }>(),
+  groupsChanged: createAction('New_Groups_Fetched')<{ parent: string; groups: LazyTaskGroup[] }>(),
+  tasksChanged: createAction('New_Tasks_Fetched')<{ parent: string; tasks: LazyTask[] }>(),
+  loading: createAction('Loading_Changed')<{ state: boolean }>(),
+  failed: createAction('Failed_Changed')<{ error?: Error }>(),
+  clear: createAction('Clear_Projects_State')(),
 };
 
 export default projectActions;

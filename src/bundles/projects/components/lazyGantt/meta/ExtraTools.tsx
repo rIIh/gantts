@@ -1,5 +1,5 @@
 import React from 'react';
-import { Discussable, LazyProject, LazyTask, LazyTaskGroup } from '../../../types';
+import { Discussable, LazyProject, LazyTask, LazyTaskGroup, Subtask } from '../../../types';
 import styled from 'styled-components';
 
 interface Props {
@@ -13,14 +13,22 @@ const Meta = styled.span`
 `;
 
 export const ExtraTools: React.FC<Props> = ({ target, withChecklist, isParentHovered }) => {
-  if (!isParentHovered) { return null; }
+  const showComments = isParentHovered || target.comments.length > 0;
+  const showChecklist = isParentHovered || target.comments.length > 0;
+  const subtasks: Subtask[] | undefined = (target as LazyTask).subtasks;
   return <>
-    <Meta className="icon">
+    <Meta className="icon" style={{ display: showComments ? undefined : 'none' }}>
       <span className="tg-icon discussion"/>
+      { target.comments.length > 0 && <p style={{ fontSize: '0.8em', marginLeft: '0.25rem' }}> {target.comments.length}</p>}
     </Meta>
     { withChecklist && (
-        <Meta className="icon">
+        <Meta className="icon" style={{ display: showChecklist ? undefined : 'none' }}>
           <span className="tg-icon checklist"/>
+          { subtasks.length > 0 && (
+              <p style={{ fontSize: '0.8em', marginLeft: '0.25rem' }}>
+                {subtasks?.filter(st => st.completed).length}/{subtasks.length}
+              </p>
+          )}
         </Meta>
     )}
   </>;

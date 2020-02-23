@@ -1,5 +1,5 @@
 import { DateRange, LazyTask, TaskType } from '../../../types';
-import React, { forwardRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Atom, AtomDot, AtomHandle, AtomLabel, AtomWrapper, Milestone } from '../styled';
 import { useDrag, useGesture, useHover } from 'react-use-gesture';
@@ -23,6 +23,7 @@ interface AtomProps {
   task: LazyTask;
   getDateColumn: (date: Date) => HTMLElement;
   style?: React.CSSProperties;
+  parentOffset: number;
 }
 
 const DraggableAtom = styled(Atom)`
@@ -51,20 +52,18 @@ const Content = styled.div`
   z-index: 100;
 `;
 
-const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateColumn }, ref) => {
+const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateColumn, parentOffset }, ref) => {
   const atomStart = task.start ? getDateColumn(task.start) : null;
   const atomEnd = task.end ? getDateColumn(task.end) : null;
   const [mouseOver, setMouseOver] = useState(false);
   const [dragState, setDrag] = useState<DragState | null>(null);
   const [handleState, setHandle] = useState<HandleState | null>(null);
-  const [assigned] = useSimpleCollection<LazyUserInfo>(task.assigned());
   const [dates, setDates] = useState<DateRange | null>(null);
   const atom = useForwardedRef(ref);
   const [selected, setSelected] = useState(false);
   const theme = useTheme<GanttTheme>();
-  const { findNode, filters, sharedState } = useContext(LGanttContext)!;
+  const { findNode, sharedState } = useContext(LGanttContext)!;
   const { setAtomRef } = useContext(CalendarContext);
-  const [waitingForRelink, setRelink] = useState(false);
   
   useEffect(() => () => setAtomRef(task.uid, null), []);
   
@@ -152,7 +151,6 @@ const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateCo
         setDrag({ dragXOffset: mx });
       } else {
         if (dragState !== null) {
-          console.log('hello there');
           setDrag(null);
         }
       }
@@ -253,8 +251,6 @@ const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateCo
   
   const offsetResolver = useCallback((el): [number, number] => [el.offsetLeft, el.offsetTop + el.parentElement!.offsetTop], []);
   
-  const groupParentElement = useMemo(() => document.querySelector(`#group_${task.parentGroup().id}_calendar`) as HTMLElement, [sharedState, task]);
-  
   return <>
     {linkState && wrapper.current && <Link state={linkState} theme={linkTheme} offsetResolver={offsetResolver}/>}
     <AtomWrapper selected={selected}
@@ -270,11 +266,11 @@ const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateCo
           filled={task.progress ?? sharedState.get(task.uid)?.progress ?? 0}
           data-atom_uid={task.uid}
           className="calendar_task_atom on_calendar"
-          isDragging={dragState != null || handleState != null || groupParentElement.style.marginLeft != '0px'}
+          isDragging={dragState != null || handleState != null || parentOffset != 0}
           style={{
             left: `${editOffset}px`,
             width: `${width}px`,
-            marginLeft: `${parseInt(groupParentElement.style.marginLeft)}px`,
+            marginLeft: `${parentOffset}px`,
           }}
           {...atomGesture()}
       >

@@ -1,0 +1,217 @@
+.tg-button {
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  display: inline-block;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  vertical-align: middle;
+  width: auto;
+}
+
+.tg-button--primary {
+  background-color: #00ADEE;
+  color: #fff;
+}
+
+.tg-button--primary:hover, .tg-button--primary.tg-button--hover {
+  background-color: #00a2df;
+}
+
+.tg-button--primary:active, .tg-button--primary.tg-button--active {
+  background-color: #0097cf;
+}
+
+.tg-button--primary-complimentary {
+  background-color: rgba(255, 255, 255, 0.11);
+  border-color: #FFF;
+  color: #FFF;
+}
+
+.tg-button--primary-complimentary:hover, .tg-button--primary-complimentary.tg-button--hover {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+.tg-button--primary-complimentary:active, .tg-button--primary-complimentary.tg-button--active {
+  background-color: rgba(255, 255, 255, 0.33);
+}
+
+.tg-button--secondary {
+  background-color: #FFF;
+  color: #0C161A;
+}
+
+.tg-button--secondary:hover, .tg-button--secondary.tg-button--hover {
+  border-color: #9BA2AB;
+}
+
+.tg-button--secondary:active, .tg-button--secondary.tg-button--active {
+  border-color: #62676D;
+}
+
+.tg-button--secondary-border {
+  background-color: #FFF;
+  border-color: #DDD;
+  color: #0C161A;
+}
+
+.tg-button--secondary-border:hover, .tg-button--secondary-border.tg-button--hover {
+  border-color: #9BA2AB;
+}
+
+.tg-button--secondary-border:active, .tg-button--secondary-border.tg-button--active {
+  border-color: #62676D;
+}
+
+.tg-button--secondary-complimentary {
+  background-color: #E7F2FF;
+  color: #00ADEE;
+}
+
+.tg-button--secondary-complimentary:hover, .tg-button--secondary-complimentary.tg-button--hover {
+  background-color: #DEEDFF;
+}
+
+.tg-button--secondary-complimentary:active, .tg-button--secondary-complimentary.tg-button--active {
+  background-color: #D4E8FF;
+}
+
+.tg-button--text-primary {
+  color: #00ADEE;
+}
+
+.tg-button--text-primary:hover, .tg-button--text-primary.tg-button--hover {
+  color: #00a2df;
+  text-decoration: underline;
+}
+
+.tg-button--text-primary:active, .tg-button--text-primary.tg-button--active {
+  color: #0097cf;
+  text-decoration: underline;
+}
+
+.tg-button--text-secondary {
+  color: #0C161A;
+}
+
+.tg-button--text-secondary:hover, .tg-button--text-secondary.tg-button--hover {
+  text-decoration: underline;
+}
+
+.tg-button--text-secondary:active, .tg-button--text-secondary.tg-button--active {
+  color: #62676d;
+  text-decoration: underline;
+}
+
+.tg-button--text-complimentary {
+  color: #9ba2ab;
+}
+
+.tg-button--text-complimentary:hover, .tg-button--text-complimentary.tg-button--hover {
+  color: #62676d;
+  text-decoration: underline;
+}
+
+.tg-button--text-complimentary:active, .tg-button--text-complimentary.tg-button--active {
+  color: #0C161A;
+  text-decoration: underline;
+}
+
+.tg-button--wide {
+  width: 100% !important;
+}
+
+.tg-button--disabled {
+  opacity: 0.3;
+}
+
+.tg-button--x-small {
+  font-size: 12px;
+  line-height: 13px;
+  padding: 9px 15px;
+}
+
+.tg-button--slim {
+  font-size: 14px;
+  line-height: 15px;
+  padding: 12px 20px;
+}
+
+.tg-button--small {
+  font-size: 16px;
+  line-height: 18px;
+  padding: 12px 25px;
+}
+
+.tg-button--medium {
+  font-size: 16px;
+  line-height: 18px;
+  padding: 15px 35px;
+}
+
+.tg-button--large {
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 20px;
+  padding: 26px 55px;
+}
+
+.tg-button--summer-heat {
+  background-color: #FF8063;
+}
+
+.tg-button--summer-heat:hover, .tg-button--summer-heat.tg-button--hover {
+  background-color: #ff7454;
+}
+
+.tg-button--summer-heat:active, .tg-button--summer-heat.tg-button--active {
+  background-color: #ff6744;
+}
+
+.tg-button--wizard-of-emerald {
+  background-color: #3EC694;
+}
+
+.tg-button--wizard-of-emerald:hover, .tg-button--wizard-of-emerald.tg-button--hover {
+  background-color: #38bd8c;
+}
+
+.tg-button--wizard-of-emerald:active, .tg-button--wizard-of-emerald.tg-button--active {
+  background-color: #34b183;
+}
+
+.tg-button--limearita {
+  background-color: #A1C14C;
+}
+
+.tg-button--limearita:hover, .tg-button--limearita.tg-button--hover {
+  background-color: #9bbc41;
+}
+
+.tg-button--limearita:active, .tg-button--limearita.tg-button--active {
+  background-color: #91b13d;
+}
+
+.tg-button--magento {
+  background-color: #A771B4;
+}
+
+.tg-button--magento:hover, .tg-button--magento.tg-button--hover {
+  background-color: #a167af;
+}
+
+.tg-button--magento:active, .tg-button--magento.tg-button--active {
+  background-color: #9b5da9;
+}
+
+.tg-button--purple-passion {
+  background-color: #6F6298;
+}
+
+.tg-button--purple-passion:hover, .tg-button--purple-passion.tg-button--hover {
+  background-color: #685c8f;
+}
+
+.tg-button--purple-passion:active, .tg-button--purple-passion.tg-button--active {
+  background-color: #615685;
+}

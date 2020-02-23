@@ -3,10 +3,11 @@ import styled, { css, DefaultTheme, StyledComponent } from 'styled-components';
 import _ from 'lodash';
 import { adjust, Colors, Palette } from '../../../colors';
 import { useForwardedRef } from '../../../../common/hooks/useForwardedRef';
+import { animated } from 'react-spring';
 
-export const GroupHeader = styled.div<{ filled?: number; dragging?: boolean }>`
+export const GroupHeader = styled(animated.div)<{ filled?: number; dragging?: boolean }>`
   position: absolute;
-  transition: ${props => props.dragging ? null : 'all 400ms'};
+  transition: ${props => props.dragging ? null : 'width 400ms, margin-top 400ms, height 400ms'};
   height: ${props => props.hidden ? 0 : `${props.theme.atomHeight - props.theme.barVMargin * 2}px`};
   margin-top: ${props => `${props.theme.barVMargin}px`};
   background-color: #d9d9e5;
@@ -163,7 +164,7 @@ export const Atom = styled.div<AtomProps>`
     border-radius: 0.2857em;
     background-color: ${({ color }) => Palette[color].fill};
     border: 1px solid ${({ color }) => Palette[color].border};
-    transition: ${({ isDragging }) => isDragging ? null : 'all 400ms'};
+    transition: ${({ isDragging }) => isDragging ? null : 'left 400ms, width 400ms, top 400ms'};
     z-index: 50;
     
     &::after {
@@ -185,7 +186,7 @@ export const Milestone = styled.div<AtomProps>`
   height: ${({ theme }) => theme.atomHeight - theme.barVMargin * 2}px;
   width: ${({ theme }) => theme.colWidth}px;
   top: ${({ theme }) => theme.barVMargin}px;
-  transition: ${({ isDragging }) => isDragging ? null : 'all 400ms'};
+  transition: ${({ isDragging }) => isDragging ? null : 'left 400ms, top 400ms'};
   background-color: transparent;
   z-index: 50;
   

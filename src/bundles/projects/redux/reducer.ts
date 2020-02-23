@@ -2,59 +2,52 @@ import { ProjectsState, Project, TaskGroupID, Task } from '../types';
 import { ActionType, createReducer } from 'typesafe-actions';
 import Immutable from 'immutable';
 import projectActions from './actions';
+import { sortOrderable } from '../components/lazyGantt/helpers';
+import _ from 'lodash';
 
 const initialState: ProjectsState = {
-  projects: [],
-  lazy: [],
-  taskGroups: Immutable.Map(),
+  documents: Immutable.Map(),
+  attachedProjects: Immutable.Map(),
+  groups: Immutable.Map(),
   tasks: Immutable.Map(),
+  calculatedProperties: Immutable.Map(),
   isLoading: false,
-  isFailed: false,
-  message: '',
 };
-const { setLoading, setFailed, clear, projectsFetched, created, updated, destroyed } = projectActions;
+const { groupsChanged, tasksChanged, failed, loading, disposerCreated, calculatedPropertiesUpdate, calculatedPropertiesUpdateBatch, clear } = projectActions;
 type RootAction = ActionType<typeof projectActions>;
 
 const projectsReducer = createReducer<ProjectsState, RootAction>(initialState)
-  .handleAction(setLoading, (state, { payload: isLoading }) => {
-    return { ...state, isLoading, isFailed: isLoading ? false : state.isFailed };
-  })
-  .handleAction(setFailed, (state, { payload: error }) => {
-    return { ...state, isFailed: true, message: error.message };
-  })
-  .handleAction(clear, (state) => {
-    return { ...state, projects: [], taskGroups: Immutable.Map(), tasks: Immutable.Map() };
-  })
-  .handleAction(projectsFetched, (state, { payload: { projects } }) => {
-    return { ...state, lazy: projects, isLoading: false };
-  })
-  // .handleAction(tasksFetched, (state, { payload: { projectID, tasks, taskGroups } }) => {
-  //   const taskGroupsCopy = state.taskGroups.set(projectID, taskGroups);
-  //   //@ts-ignore
-  //   const tasksCopy = state.tasks.merge(tasks);
-  //   return { ...state, tasks: tasksCopy, taskGroups: taskGroupsCopy, isLoading: false };
-  // })
-  .handleAction(created, (state, { payload: project }) => {
-    return { ...state, lazy: [ ...state.lazy, project ] };
-  })
-  .handleAction(updated, (state, { payload: project }) => {
-    let projectId = state.lazy.findIndex(_project => _project.uid === project.uid);
-    if (projectId < 0) {
-      throw new Error(`Project doesn't exists. ID - ${project.uid}`);
-    }
-    let updatedProjects = [...state.lazy, project];
-    updatedProjects.splice(projectId, 1);
-    return { ...state, lazy: updatedProjects };
-  })
-  .handleAction(destroyed, (state, { payload: projectID }) => {
-    let projectIndex = state.projects.findIndex(_project => _project.id === projectID);
-    if (projectIndex < 0) {
-      throw new Error(`Project doesn't exists. ID - ${projectID}`);
-    }
-    let updatedProjects = [...state.projects];
-    updatedProjects.splice(projectIndex, 1);
-    return { ...state, projects: updatedProjects };
-  })
+    .handleAction(groupsChanged, ({ groups: lastGroups, ...state }, { payload: { parent, groups }}) => {
+      const result = sortOrderable(groups, g => g.uid);
+      return { ...state, isFailed: undefined, groups: lastGroups.set(parent, result) };
+    })
+    .handleAction(calculatedPropertiesUpdate, (state, { payload: { key, value } }) => {
+      const lastValue = state.calculatedProperties.get(key);
+      return { ...state, calculatedProperties: state.calculatedProperties.set(key, { progress: 0, ...lastValue, ...value } ) };
+    })
+    .handleAction(calculatedPropertiesUpdateBatch, (state, { payload }) => {
+      let currentState = state.calculatedProperties;
+      for (let [key, value] of _.entries(payload)) {
+        currentState = currentState.update(key, lastValue => ({ ...lastValue, ...value }));
+      }
+      return { ...state, calculatedProperties: currentState };
+    })
+    .handleAction(tasksChanged, ({ tasks: lastTasks, ...state }, { payload: { parent, tasks }}) => {
+      return { ...state, isFailed: undefined, tasks: lastTasks.set(parent, tasks) };
+    })
+    .handleAction(failed, (state, { payload: { error } }) => {
+      return { ...state, isFailed: error };
+    })
+    .handleAction(loading, (lastState, { payload: { state } }) => {
+      return { ...lastState, isFailed: undefined, isLoading: state };
+    })
+    .handleAction(disposerCreated, (state, { payload: { project, disposer } }) => {
+      return { ...state, attachedProjects: state.attachedProjects.set(project, [...state.attachedProjects.get(project) ?? [], disposer]) };
+    })
+    .handleAction(clear, (state) => {
+      state.attachedProjects.forEach(disposers => disposers.forEach(disposer => disposer()));
+      return { ...state, attachedProjects: state.attachedProjects.clear(), groups: state.groups.clear(), tasks: state.tasks.clear(), calculatedProperties: state.calculatedProperties.clear() };
+    })
   ;
 
 export default projectsReducer;

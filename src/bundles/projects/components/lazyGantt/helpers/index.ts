@@ -19,5 +19,6 @@ export const sortOrderable = <T extends Orderable>(orderable: T[], by: (el: T) =
     }
     i++;
   }
+  if (result.length != orderable.length) { return orderable; }
   return result.reverse();
 };

@@ -3,30 +3,42 @@ import _ from 'lodash';
 import { LazyUserInfo, User, UserInfo } from '../../user/types';
 import { CollectionReference, DocumentReference, DocumentReferencePath, LazyCollectionReference, LazyReference } from '../../firebase/types';
 import { Colors, Palette } from '../colors';
+import firebase from 'firebase';
 
 export type ProjectID = string;
 export type TaskGroupID = string;
 
-export interface ProjectsState {
-  projects: Project[];
-  lazy: LazyProject[];
-  taskGroups: Immutable.Map<ProjectID, TaskGroup[]>;
-  tasks: Immutable.Map<TaskGroupID, Task[]>;
-  isLoading: boolean;
-  isFailed: boolean;
-  message: string;
+export interface SharedState {
+  progress: number;
+  start?: Date;
+  end?: Date;
 }
 
-export interface ProjectCreator extends Discussable {
+export interface ProjectsState {
+  documents: Immutable.Map<string, RemoteDocument[]>;
+  calculatedProperties: Immutable.Map<string, SharedState>;
+  groups: Immutable.Map<string, LazyTaskGroup[]>;
+  tasks: Immutable.Map<string, LazyTask[]>;
+  attachedProjects: Immutable.Map<string, (() => void)[]>;
+  isFailed?: Error;
+  isLoading: boolean;
+}
+
+export interface ProjectCreator extends Discussable, WithDocs, WithNotes, WithHistory {
   title: string;
   startDate: Date;
   daysInWeekBitMask: WeekBitMask; // 1001001 mask
 }
 
+export enum ProjectState {
+  Active,
+  OnHold,
+  Complete,
+}
+
 export interface LazyProject extends ProjectCreator {
   uid: string;
-  complete: boolean;
-  onHold: boolean;
+  state: ProjectState;
   selfReference: () => DocumentReference;
   owner: () => DocumentReference;
   enrolled: () => CollectionReference;
@@ -139,14 +151,22 @@ export interface HistorySnapshot {
   message?: string;
 }
 
-export interface Document {
-  previewURL: string;
-  docURL: string;
+export interface RemoteDocument {
+  uid: string;
+  refPath: string;
+  downloadURL: string;
   title: string;
+  updatedAt: Date;
+  author: string;
+  versions: string[];
+  description: string;
 }
 
 export interface Message {
-  creator: firebase.User;
+  uid: string;
+  creator: string;
+  updatedAt: Date;
+  documents?: string[];
   content: string;
 }
 
@@ -155,11 +175,11 @@ export interface Discussable {
 }
 
 export interface WithNotes {
-  notes: Message[];
+  note: string;
 }
 
 export interface WithDocs {
-  documents: Document[];
+  documents: RemoteDocument[];
 }
 
 export interface WithHistory {

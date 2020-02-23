@@ -35,9 +35,9 @@ p {
   margin: 0;
 }
 
-.modal-dialog {
-  max-width: 404px !important;
-}
+//.modal-dialog {
+//  max-width: 404px;
+//}
 
 .icon {
   display: flex;
@@ -79,6 +79,13 @@ a:hover, button.link:hover {
   text-decoration: underline;
 }
 
+.hr {
+  box-shadow: inset 0 -1px 0 0 rgba(221, 221, 221, 0.5), inset 0 1px 0 0 rgba(221, 221, 221, 0.5), 0 5px 5px 0
+  rgba(0, 0, 0, 0.03);
+  height: 1px;
+  margin-bottom: 20px;
+}
+
 button.link {
   background: transparent;
   border: none;
@@ -104,6 +111,7 @@ button {
   outline: none;
   border: none;
   transition: all 200ms;
+  background: transparent;
 
   &:active, &:focus {
     outline: none;

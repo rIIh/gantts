@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Modal } from 'react-bootstrap';
+import { Button, Modal, ModalProps } from 'react-bootstrap';
 import { LazyProject } from '../../types';
 import { useTypedSelector } from '../../../../redux/rootReducer';
 import { UserPic } from '../../../user/components/UserPic';
@@ -12,6 +12,8 @@ import { appActions } from '../../../common/store/actions';
 import { projectReferences } from '../../firebase';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useSimpleCollection } from '../../../firebase/hooks/useSimpleReference';
+import { AssignModalProps } from './AssignForm';
+import { useModal } from '../../../common/modal/context';
 
 interface Props {
   project: LazyProject;
@@ -20,13 +22,11 @@ interface Props {
 export const InviteModal: React.FC<Props> = ({ project }) => {
   const { usersAtCompany } = useTypedSelector(state => state.userState);
   const [enrolled] = useSimpleCollection<LazyUserInfo>(project.enrolled());
-  const dispatch = useDispatch();
+  const { hideModal } = useModal();
   
   const invite = useCallback(async (user: LazyUserInfo) => {
     await projectReferences.projectEnrolled(project.uid).doc(user.uid).set(user);
   }, [project]);
-  
-  const hide = useCallback(() => dispatch(appActions.hideActiveModal()), []);
   
   return <>
     <Modal.Header closeButton>
@@ -35,12 +35,12 @@ export const InviteModal: React.FC<Props> = ({ project }) => {
     <Modal.Body>
       <UsersRow>
         { usersAtCompany.filter(user => !(enrolled?.some(enrolledUser => enrolledUser.uid == user.uid))).map(user => (
-            <UserPic withTooltip clickable key={user.uid} user={user} onClick={() => invite(user)}/>
+            <UserPic withTooltip clickable key={user.uid} userID={user.uid} onClick={() => invite(user)}/>
         ))}
       </UsersRow>
     </Modal.Body>
     <Modal.Footer>
-      <Button variant="primary" onClick={hide}>
+      <Button variant="primary" onClick={hideModal}>
         Close
       </Button>
     </Modal.Footer>

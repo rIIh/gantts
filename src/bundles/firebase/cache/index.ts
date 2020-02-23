@@ -11,6 +11,24 @@ class FirestoreCache {
   cachedCollectionQueries: Map<CollectionReference | Query, QueryState<Map<string, any>>> = new Map<CollectionReference, QueryState<Map<string, any>>>();
   cachedDocumentQueries: Map<DocumentReference, QueryState<any>> = new Map<DocumentReference, QueryState<any>>();
   
+  getOnce(reference: DocumentReference): Promise<any> {
+    return new Promise<any>(resolve => {
+      const dispose = this.listenDocument(reference, data => {
+        resolve(data);
+        dispose();
+      });
+    });
+  }
+  
+  getManyOnce(reference: CollectionReference): Promise<any> {
+    return new Promise<any>(resolve => {
+      const dispose = this.listenCollection(reference, data => {
+        resolve(data);
+        dispose();
+      });
+    });
+  }
+  
   listenCollection(reference: CollectionReference | Query, callback: (data: any) => void, onFailed?: (error: Error) => void): Disposer {
     let state = this.cachedCollectionQueries.get(reference);
     if (state) {
@@ -25,6 +43,9 @@ class FirestoreCache {
       state.value = new Map();
       reference.onSnapshot(snapshot => {
         const changes = snapshot.docChanges();
+        if (snapshot.empty) {
+          state!.listeners.forEach(listener => listener([]));
+        }
         try {
           if (snapshot.empty && !changes.some(ch => ch.type == 'removed')) {
             return;
@@ -41,6 +62,7 @@ class FirestoreCache {
               }
             }
           });
+          console.log('Firestore Cache: Changes occured', state);
           state!.listeners.forEach(listener => listener([...state!.value!.values()]));
         } catch (e) {
           onFailed?.(e);

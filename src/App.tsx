@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Route, Switch, useHistory } from 'react-router';
 import Header from './bundles/common/components/Header';
 import { routes } from './routes';
@@ -6,15 +6,9 @@ import { expectSignIn } from './bundles/common/services/firebase';
 import { Overlay, Spinner, Row, Col, Alert, Modal } from 'react-bootstrap';
 import SideMenu from './bundles/common/components/Sidemenu';
 import { useTypedSelector } from './redux/rootReducer';
-import _ from 'lodash';
-import { useDispatch } from 'react-redux';
-import { appActions } from './bundles/common/store/actions';
 
 const AppLayout: React.FC = () => {
-  const { activeModal } = useTypedSelector(state => state.app);
   const { user, isLoading, isFailed, message } = useTypedSelector((state) => state.userState);
-  const dispatch = useDispatch();
-  const { isLoading: projectsLoading } = useTypedSelector((state) => state.projectsState);
   const history = useHistory();
   const [isLoaded, setLoaded] = useState(false);
   useEffect(() => {
@@ -25,7 +19,7 @@ const AppLayout: React.FC = () => {
       history.push('/login');
     };
   }, [user, history]);
-
+  
   return <>
     <Overlay show={!isLoaded || isLoading}>
       <div style={{
@@ -42,9 +36,9 @@ const AppLayout: React.FC = () => {
         <Spinner animation="grow"/>
       </div>
     </Overlay>
-    <Modal show={!_.isNil(activeModal)} onHide={() => dispatch(appActions.hideActiveModal())}>
-      { activeModal }
-    </Modal>
+    {/*<Modal show={!_.isNil(activeModal)} onHide={() => dispatch(appActions.hideActiveModal())}>*/}
+    {/*  { activeModal }*/}
+    {/*</Modal>*/}
     { isLoaded && !isFailed &&
     <Row noGutters className="page">
       <Col className="flex-shrink-1 flex-grow-0" >

@@ -1,24 +1,21 @@
-import React, { Fragment, useContext, useEffect, useState } from 'react';
+import React, { Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useHover } from 'react-use-gesture';
-import { useCollectionReference } from '../../../../firebase/hooks/useReference';
 import { MetaColumn } from '../styled/meta';
 import { LazyProject, LazyTask, LazyTaskGroup, TaskType } from '../../../types';
 import { GroupAtom, GroupState } from './GroupAtom';
 import styled from 'styled-components';
 import { useKeyUp, useRefEffect } from '../../../../common/lib/hooks';
 import { ProjectConverter, TaskConverter, TaskGroupConverter } from '../../../firebase/project_converter';
-import { projectCollections, projectReferences } from '../../../firebase';
-import _ from 'lodash';
+import { documents, projectCollections, projectReferences } from '../../../firebase';
 import { UserConverter } from '../../../../user/firebase/converters/users';
 import { useHistory } from 'react-router';
 import { LGanttContext } from '../LazyGantt';
 import { FirestoreApp } from '../../../../common/services/firebase';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { useSimpleCollection } from '../../../../firebase/hooks/useSimpleReference';
 import { prettyNum } from '../../utils';
-import { Palette } from '../../../colors';
 import { ExtraTools } from './ExtraTools';
-import { linkedSorter, sortOrderable } from '../helpers';
+import { useModal } from '../../../../common/modal/context';
+import { useTypedSelector } from '../../../../../redux/rootReducer';
+import { ProjectForm } from '../../forms/edit/wrappers/ProjectForm';
 
 interface Props {
   root: LazyProject;
@@ -47,26 +44,10 @@ enum CreatingState {
   Task, TaskGroup, Milestone, None,
 }
 
-const createInitialGroup = _.debounce(function(root: LazyProject) {
-  const initialGroupDoc = root.taskGroups().doc();
-  const initialGroup: LazyTaskGroup = {
-    uid: initialGroupDoc.id,
-    projectID: root.uid,
-    title: 'First Task Group',
-    selfReference: () => initialGroupDoc,
-    tasks: () => projectReferences.tasks(root.uid, initialGroupDoc.id).withConverter(TaskConverter),
-    taskGroups: () => initialGroupDoc.collection(projectCollections.taskGroupsCollection).withConverter(TaskGroupConverter),
-    comments: [],
-    documents: [],
-    history: [],
-    notes: [],
-  };
-  initialGroupDoc.set(initialGroup);
-}, 1000);
-
 export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
   const { title } = root;
-  const [subGroups] = useSimpleCollection<LazyTaskGroup>(root.taskGroups());
+  const testGroups = useTypedSelector(state => state.projectsState.groups.get(root.uid));
+  const groupState = useTypedSelector(state => state.projectsState.calculatedProperties.get(root.uid));
   const history = useHistory();
   const { sharedState } = useContext(LGanttContext)!;
   const bind = useHover(({ hovering }) => setHovered(hovering));
@@ -76,36 +57,13 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
   const [targetGroup, setTarget] = useState<LazyTaskGroup | null>(null);
   const [input] = useRefEffect<HTMLInputElement>(null, (input) => input?.focus());
   const [formTitle, setTitle] = useState('');
-  const [progress, setProgress] = useState(0);
-  
-  useEffect(() => {
-    if (subGroups && subGroups.length > 0) {
-      const newProgress = Math.floor(subGroups.map(g => (sharedState.get(g.uid) as GroupState | undefined)?.progress ?? 0)
-          .reduce((acc, p) => acc + p) / subGroups.length * 10) / 10;
-      if (progress != newProgress) {
-        setProgress(newProgress);
-      }
-    } else {
-      if (progress != 0) {
-        setProgress(0);
-      }
-    }
-  }, [sharedState]);
-  
-  useEffect(() => {
-    createInitialGroup.cancel();
-    if (subGroups?.length === 0) {
-      createInitialGroup(root);
-    }
-    // createInitialGroup(root);
-  }, [subGroups]);
   
   const startCreation = (type: CreatingState, target: LazyTaskGroup) => {
     setCreating(type);
     setTarget(target);
   };
   
-  const submitForm = () => {
+  const submitForm = useCallback(() => {
     if (!formTitle || formTitle.length == 0 || !targetGroup) {
       return;
     }
@@ -119,7 +77,7 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
           selfReference: () => doc,
           assigned: () => doc.collection(projectCollections.assignedCollection).withConverter(UserConverter),
           color: 'Basic Blue',
-          notes: [],
+          note: '',
           history: [],
           documents: [],
           comments: [],
@@ -142,7 +100,7 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
           next: targetGroup.next,
           documents: [],
           history: [],
-          notes: [],
+          note: '',
           title: formTitle,
           projectID: root.uid,
         });
@@ -151,13 +109,15 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
     }
     setCreating(CreatingState.None);
     setTarget(null);
-  };
+  }, [formTitle, targetGroup, creating]);
   
+  useEffect(() => setTitle(''), [creating]);
   useKeyUp('Enter', () => {
     submitForm();
   });
   
-  useEffect(() => setTitle(''), [creating]);
+  const { showModal } = useModal(<ProjectForm project={root}/>, { size: 'xl', animation: false });
+  
   return (
       <>
         <div
@@ -173,7 +133,7 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
         <span className={'fas ' + (isCollapsed ? 'fa-caret-right' : 'fa-caret-down')} onClick={() => setCollapsed(!isCollapsed)}/>
       </span>
             <span className="gantt__atom_meta_toolbar" style={{ display: isHovered ? undefined : 'none' }}>
-      <span className="badge toolbar__button link">
+      <span className="badge toolbar__button link" onClick={showModal}>
         <span className="fas fa-pen"/>
       </span>
       <span className="badge toolbar__button link" onClick={async () => {
@@ -191,12 +151,12 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
     </span>
           </MetaColumn>
           <MetaColumn type="assigns"/>
-          <MetaColumn type="progress" style={{ justifyContent: 'center', textAlign: 'center' }}>{prettyNum(progress)}%</MetaColumn>
+          <MetaColumn type="progress" style={{ justifyContent: 'center', textAlign: 'center' }}>{prettyNum(groupState?.progress ?? 0)}%</MetaColumn>
         </div>
-        { sortOrderable(subGroups ?? [], e => e.uid).map(group => (
+        { testGroups?.map(group => (
             <Fragment key={group.uid}>
               <GroupAtom level={level + 1} group={group}/>
-              {!sharedState.get(group.uid)?.collapsed && (
+              { !sharedState.get(group.uid)?.collapsed && (
                   <div className="gantt__meta_panel_toolbar"
                        style={{ opacity: toolbar ? undefined : 0, pointerEvents: toolbar ? undefined : 'none' }}>
                     <MetaColumn type="extra"/>

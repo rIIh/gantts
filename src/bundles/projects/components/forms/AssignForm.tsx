@@ -12,6 +12,9 @@ import { useCollectionData, useDocumentData } from 'react-firebase-hooks/firesto
 import { useSimpleCollection, useSimpleReference } from '../../../firebase/hooks/useSimpleReference';
 import { FakeCheckbox } from '../lazyGantt/styled';
 import { MyButton } from '../../../common/components/styled/Button';
+import { useModal } from '../../../common/modal/context';
+import _ from 'lodash';
+import { CachedQueriesInstance } from '../../../firebase/cache';
 
 export interface FormProps {
   task: LazyTask;
@@ -34,9 +37,12 @@ const AssignForm: React.FC<FormProps> = ({ task, onChange, initialValue }) => {
   const [filter, setFilter] = useState('');
   const [enrolled] = useSimpleCollection<LazyUserInfo>(project?.enrolled());
   const [selected, setSelected] = useState<LazyUserInfo[]>(initialValue ?? []);
+  useEffect(() => setSelected(initialValue ?? []), [initialValue]);
   
   useEffect(() => {
-    onChange(selected);
+    if (!_.isEqual(selected, initialValue)) {
+      onChange(selected);
+    }
   }, [selected]);
   
   return <div>
@@ -58,21 +64,27 @@ const AssignForm: React.FC<FormProps> = ({ task, onChange, initialValue }) => {
   </div>;
 };
 
-export interface ModalProps {
+export interface AssignModalProps {
   task: LazyTask;
   initialValue?: LazyUserInfo[];
   onHide?: () => void;
 }
 
-export const AssignModal: React.FC<ModalProps> = ({ task, initialValue, onHide }) => {
+export const AssignModal: React.FC<AssignModalProps> = ({ task, initialValue, onHide }) => {
   const [selected, setSelected] = useState<LazyUserInfo[]>(initialValue ?? []);
-  const [project] = useDocumentData<LazyProject>(task.project());
-  const dispatch = useDispatch();
+  const [project] = useSimpleReference<LazyProject>(task.project());
+  const { showModal } = useModal(project && <InviteModal project={project}/>);
   
   useEffect(() => setSelected(initialValue ?? []), [initialValue]);
   
   const onSubmit = useCallback(async (selected: LazyUserInfo[]) => {
+    const assigned = await CachedQueriesInstance.getManyOnce(task.assigned()) as LazyUserInfo[];
     const promises: Promise<void>[] = [];
+    const deleted = assigned.filter(u => !selected.some(s => s.uid == u.uid));
+    console.log(deleted);
+    for (let deletedUser of deleted) {
+      promises.push(task.assigned().doc(deletedUser.uid).delete());
+    }
     for (let user of selected) {
       if (!initialValue?.find(u => user.uid == u.uid)) {
         promises.push(task.assigned().doc(user.uid).set(user));
@@ -89,7 +101,7 @@ export const AssignModal: React.FC<ModalProps> = ({ task, initialValue, onHide }
   return <>
       <Modal.Body style={{ maxWidth: '404px' }}>
         {task && <AssignForm task={task} onChange={setSelected} initialValue={selected}/>}
-        { project && <Button variant="link" onClick={() => dispatch(appActions.setActiveModal(<InviteModal project={project}/>))}>Add new person/resource</Button> }
+        { project && <Button variant="link" onClick={showModal}>Add new person/resource</Button> }
       </Modal.Body>
       <Modal.Footer style={{ border: 'none' }}>
         <MyButton onClick={() => {

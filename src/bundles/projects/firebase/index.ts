@@ -1,5 +1,5 @@
 import { DocumentData, DocumentReference, FieldPath, Firestore } from '../../firebase/types';
-import { FirestoreApp } from '../../common/services/firebase';
+import { FireStorage, FirestoreApp } from '../../common/services/firebase';
 import { CompanyConverter, UserConverter } from '../../user/firebase/converters/users';
 import { ProjectConverter, TaskConverter, TaskGroupConverter } from './project_converter';
 import { ProjectID, TaskGroupID } from '../types';
@@ -11,6 +11,7 @@ class ProjectCollections {
   assignedCollection = 'assigned';
   taskGroupsCollection = 'task_groups';
   tasksCollection = 'tasks';
+  documentsData = 'documents';
 }
 
 export const projectCollections = new ProjectCollections();
@@ -22,6 +23,9 @@ class ProjectReferences extends Firestore {
   taskGroups = (project: ProjectID) => this.projects.doc(project).collection(projectCollections.taskGroupsCollection).withConverter(TaskGroupConverter);
   tasks = (project: ProjectID, taskGroup: TaskGroupID) => this.taskGroups(project).doc(taskGroup).collection(projectCollections.tasksCollection).withConverter(TaskConverter);
   assigned = (user: LazyUserInfo) => FirestoreApp.collectionGroup(projectCollections.assignedCollection).where('uid', '==', user.uid);
+  documentsData = (project: ProjectID) => this.projects.doc(project).collection(projectCollections.documentsData);
 }
+
+export const documents = (project: string, bucket?: string) => FireStorage.ref(`projects/${project}/documents/${bucket ?? 'root'}/`);
 
 export const projectReferences = new ProjectReferences();

@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { Set } from 'immutable';
 import { Dropdown, FormControl, InputGroup } from 'react-bootstrap';
 import { LGanttContext } from './LazyGantt';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { LazyUserInfo } from '../../../user/types';
 import _ from 'lodash';
 import { useSimpleCollection } from '../../../firebase/hooks/useSimpleReference';
@@ -71,7 +70,8 @@ export const DropdownLink = React.forwardRef<HTMLAnchorElement, { onClick?: (e: 
 
 export const CheckField: React.FC<{ label: string; checked?: boolean; onChecked?: (checked: boolean) => void }> = ({ label, checked, onChecked }) => {
   const [state, setState] = useState(checked ?? false);
-  useEffect(_.after(1, () => onChecked?.(state)), [state]);
+  useEffect(_.after(1, () => { if (checked != state) { onChecked?.(state); }}), [state]);
+  useEffect(() => setState(checked ?? false), [checked]);
   
   return <InputGroup className="mb-3">
       <InputGroup.Prepend>
@@ -112,7 +112,9 @@ export const LazyGanttHeader: React.FC<Props> = ({ onAssignedFilter, onDateFilte
       <Dropdown.Toggle as={DropdownLink} id="hello world">Assignees</Dropdown.Toggle>
       <Dropdown.Menu className="p-3" style={{ width: 'max-content' }}>
         { enrolled && enrolled?.map(user => (
-            <Dropdown.Item as={CheckField} onChecked={(checked: boolean) => checked ? setCheckedUsers(checkedUsers.add(user.uid)) : setCheckedUsers(checkedUsers.delete(user.uid))}
+            <Dropdown.Item as={CheckField}
+                           checked={checkedUsers.some(checked => checked == user.uid)}
+                           onChecked={(checked: boolean) => checked ? setCheckedUsers(checkedUsers.add(user.uid)) : setCheckedUsers(checkedUsers.delete(user.uid))}
                            key={user.uid} label={user.displayName ?? 'Anonymous'}/>
         ))}
       </Dropdown.Menu>

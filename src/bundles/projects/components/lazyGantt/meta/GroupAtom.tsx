@@ -10,6 +10,10 @@ import { useSimpleCollection } from '../../../../firebase/hooks/useSimpleReferen
 import { prettyNum } from '../../utils';
 import { ExtraTools } from './ExtraTools';
 import { linkedSorter } from '../helpers';
+import { useTypedSelector } from '../../../../../redux/rootReducer';
+import { useModal } from '../../../../common/modal/context';
+import { ProjectForm } from '../../forms/edit/wrappers/ProjectForm';
+import { GroupForm } from '../../forms/edit/wrappers/GroupForm';
 
 interface Props {
   group: LazyTaskGroup;
@@ -24,29 +28,14 @@ export interface GroupState {
 export const GroupAtom: React.FC<Props> = ({ group, level }) => {
   const { title } = group;
   const { sharedState, writeSharedState } = useContext(LGanttContext)!;
+  const groupState = useTypedSelector(state => state.projectsState.calculatedProperties.get(group.uid));
   const meta = sharedState.get(group.uid) as GroupState | undefined;
   const [isHovered, setHovered] = useState(false);
   const hovered = useHover(({ hovering }) => setHovered(hovering));
-  
   const [subGroups] = useSimpleCollection<LazyTaskGroup>(group.taskGroups());
   const [tasks] = useSimpleCollection<LazyTask>(group.tasks());
   
-  useEffect(() => {
-    const count = (subGroups?.length ?? 0) + (tasks?.length ?? 0);
-    if (count == 0) {
-      if (meta?.progress !== undefined && meta?.progress != 0) {
-        writeSharedState(group.uid, { progress: 0 });
-      }
-      return;
-    }
-    if (subGroups?.some(group => !sharedState.get(group.uid))) { return; }
-    const groupsProgress = subGroups && subGroups.length > 0 && subGroups.map(group => (sharedState.get(group.uid) as GroupState).progress ?? 0).reduce((acc, val) => acc + val) || 0;
-    const tasksProgress = tasks && tasks.length > 0 && tasks?.map(task => task.progress ?? (sharedState?.get(task.uid)?.progress ?? 0) as number).reduce((acc, val) => acc + val) || 0;
-    const result = (groupsProgress + tasksProgress) / count;
-    if (meta?.progress != result) {
-      writeSharedState(group.uid, { progress: (groupsProgress + tasksProgress) / count ?? 0 });
-    }
-  }, [tasks, subGroups, sharedState]);
+  const { showModal } = useModal(<GroupForm group={group}/>, { size: 'xl', animation: false });
   
   return (
       <>
@@ -64,7 +53,7 @@ export const GroupAtom: React.FC<Props> = ({ group, level }) => {
         <span className={'fas ' + (meta?.collapsed ? 'fa-caret-right' : 'fa-caret-down')} />
       </span>
             <span className="gantt__atom_meta_toolbar" style={{ display: isHovered ? undefined : 'none' }}>
-      <span className="badge toolbar__button link">
+      <span className="badge toolbar__button link" onClick={showModal}>
         <span className="fas fa-pen"/>
       </span>
       <span className="badge toolbar__button link" onClick={async () => {
@@ -84,7 +73,7 @@ export const GroupAtom: React.FC<Props> = ({ group, level }) => {
     </span>
           </MetaColumn>
           <MetaColumn type="assigns"/>
-          <MetaColumn type="progress" style={{ justifyContent: 'center', textAlign: 'center' }}>{ prettyNum(Math.floor((meta?.progress ?? 0) * 10)/10) }%</MetaColumn>
+          <MetaColumn type="progress" style={{ justifyContent: 'center', textAlign: 'center' }}>{ prettyNum(Math.floor((groupState?.progress ?? 0) * 10)/10) }%</MetaColumn>
         </div>
         { !meta?.collapsed && (
             <>

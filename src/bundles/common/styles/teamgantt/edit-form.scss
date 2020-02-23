@@ -1,0 +1,51 @@
+.edit-project-overlay .main-sidebar {
+  padding-top: 40px; }
+.edit-project-overlay .main-sidebar .sidebar-tooltip {
+  cursor: pointer;
+  margin-left: 5px;
+  vertical-align: top; }
+.edit-project-overlay .main-sidebar i .tooltip {
+  font-family: 'proxima-nova', sans-serif; }
+.edit-project-overlay .main-sidebar .section-header {
+  margin-top: 0; }
+.edit-project-overlay .main-sidebar .input {
+  display: block; }
+.edit-project-overlay .main-sidebar .input.invalid {
+  border-color: #FF8063; }
+.edit-project-overlay .main-sidebar .react-datepicker-wrapper, .edit-project-overlay .main-sidebar .react-datepicker__input-container {
+  display: block; }
+.edit-project-overlay .main-sidebar .button-group {
+  display: block;
+  margin-right: 0; }
+.edit-project-overlay .main-sidebar .toggle-button {
+  background-color: #fff;
+  border: 1px solid #CCCCCC;
+  color: #979797;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 0 7px;
+  text-transform: capitalize;
+  width: 77px; }
+.edit-project-overlay .main-sidebar .week-day {
+  font-size: 12px;
+  width: 33px; }
+.edit-project-overlay .main-sidebar .button.selected {
+  background-color: #E5E5E5;
+  color: #373636; }
+.edit-project-overlay .main-sidebar .delete-project .hr {
+  box-shadow: inset 0 -1px 0 0 rgba(221, 221, 221, 0.5), inset 0 1px 0 0 rgba(221, 221, 221, 0.5), 0 5px 5px 0 rgba(0, 0, 0, 0.03);
+  height: 1px;
+  margin: 0;
+  margin-bottom: 20px; }
+.edit-project-overlay .main-sidebar .delete-project .delete-link {
+  font-size: 13px;
+  text-decoration: underline; }
+.edit-project-overlay .main-sidebar .delete-project .dropdown-body {
+  width: 300px; }
+.edit-project-overlay .main-sidebar .delete-project .confirm-message p {
+  color: #373636;
+  font-size: 13px;
+  line-height: 16px;
+  text-align: center; }
+.edit-project-overlay .main-sidebar .delete-project .confirm-action-cancel {
+  text-decoration: underline; }

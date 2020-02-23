@@ -14,6 +14,7 @@ import { LazyReference } from '../../firebase/types';
 import { useCollectionData, useDocumentData } from 'react-firebase-hooks/firestore';
 import { LazyUserInfo } from '../../user/types';
 import { useSimpleCollection } from '../../firebase/hooks/useSimpleReference';
+import { useModal } from '../../common/modal/context';
 
 interface Props {
   project: LazyProject;
@@ -21,15 +22,14 @@ interface Props {
 
 const ProjectLink: React.FC<React.ComponentProps<'li'> & Props> = ({ className, project }) => {
   const [enrolled] = useSimpleCollection<LazyUserInfo>(project.enrolled());
-  const dispatch = useDispatch();
-  
+  const { showModal, hideModal } = useModal(<InviteModal project={project}/>);
   
   return <li className={'project_link ' + className}>
     <Link className="project_link__title" to={`/projects/${project.uid}`}>{ project.title }</Link>
     <div className="spacer"/>
     <div className="project_link__assigned_list">
       { enrolled?.map((user) => (
-          <UserPic key={user.uid} user={user} size={24} withTooltip/>
+          <UserPic key={user.uid} userID={user.uid} size={24} withTooltip/>
       ))}
       {/*{ enrolledFailed && <Warning message={enrolledFailed?.message}/>}*/}
       <OverlayTrigger
@@ -40,7 +40,7 @@ const ProjectLink: React.FC<React.ComponentProps<'li'> & Props> = ({ className, 
                 </Tooltip>
               }>
         <Avatar size={18} style={{ backgroundColor: 'lightgrey', cursor: 'pointer' }}
-                onClick={() => dispatch(appActions.setActiveModal(<InviteModal project={project}/>))}>
+                onClick={showModal}>
           <span className="fas fa-plus" style={{ fontSize: '0.75em' }}/>
         </Avatar>
       </OverlayTrigger>
