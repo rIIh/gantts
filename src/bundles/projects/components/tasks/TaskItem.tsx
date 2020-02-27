@@ -17,6 +17,8 @@ import { LazyUserInfo } from '../../../user/types';
 import { useSimpleCollection, useSimpleReference } from '../../../firebase/hooks/useSimpleReference';
 import { fractionByTruth, prettyNum } from '../utils';
 import { useModal } from '../../../common/modal/context';
+import {Colors, Palette} from "../../colors";
+import {userReferences} from "../../../user/firebase";
 
 interface Props {
   task: LazyReference<LazyTask>;
@@ -30,14 +32,14 @@ const Item = styled.div`
   padding: 13px;
 `;
 
-const Progress = styled.div`
+export const Progress = styled.div`
   position: relative;
-  width: 74px;
+  width: 100%;
   height: 100%;
   margin-right: 20px;
 `;
 
-const Marker = styled.div<{ state?: number }>`
+export const Marker = styled.div<{ state?: number }>`
   position: absolute;
   left: ${props => props.state ?? 0}%;
   width: 1px;
@@ -45,10 +47,11 @@ const Marker = styled.div<{ state?: number }>`
   background-color: grey;
 `;
 
-const Field = styled.div<{ filled?: number }>`
+const Field = styled.div<{ filled?: number; color: Colors<Palette> }>`
 //#D8E5AE
-  background-color: #D8E5AE;
+  background-color: ${props => Palette[props.color].fill};
   border-radius: 4px;
+  border: 1px solid ${props => Palette[props.color].border};
   position: absolute;
   display: flex;
   align-items: center;
@@ -64,7 +67,7 @@ const Field = styled.div<{ filled?: number }>`
     left: 0;
     top: 0;
     height: 100%;
-    background-color: #88d04c;
+    background-color: ${props => Palette[props.color].border};
     width: ${props => props.filled}%;
     z-index: 10;
     
@@ -117,11 +120,13 @@ const Checkbox: React.FC<{ checked?: boolean; onChange?: (newValue: boolean) => 
 
 interface ProgressProps {
   progress: number;
-  dates?: { start: Date; end: Date };
+  color?: Colors<Palette>;
+  dates?: { start?: Date; end?: Date };
   onChange?: (newValue: number) => void;
+  withoutInput?: boolean;
 }
 
-const ProgressBar = forwardRef<HTMLInputElement, ProgressProps>(({ progress, dates, onChange }, ref) => {
+export const ProgressBar = forwardRef<HTMLInputElement, ProgressProps>(({ progress, dates, onChange, color, withoutInput }, ref) => {
     const [state, setState] = useState(progress);
     useEffect(() => setState(progress), [progress]);
     
@@ -134,18 +139,21 @@ const ProgressBar = forwardRef<HTMLInputElement, ProgressProps>(({ progress, dat
     }, [onChange]);
     
     const markerState = useMemo((): number => {
-      if (!dates) { return 0; }
+      if (!dates || !dates.start || !dates.end) { return 0; }
       const { start, end } = dates;
-      const total = end.getTime() - start.getTime();
-      const offset = Date.today().getTime() - start.getTime();
+      const total = end!.getTime() - start!.getTime();
+      const offset = Date.today().getTime() - start!.getTime();
       return clamp(offset / total * 100, 0, 100);
     }, [dates]);
     
     return <Progress>
       { dates && <Marker state={markerState}/> }
-      <Field filled={state}>
+       <Field filled={state} color={color ?? 'Pretty Pink'}>
+         { !withoutInput && <>
         <Checkbox checked={state == 100} onChange={checked => { checked ? setState(100) : setState(0); onChange?.(checked ? 100 : 0); }}/>
         <Input ref={ref} placeholder="0" value={prettyNum(state) + '%'} onChange={progressChange}/>
+        </>
+         }
       </Field>
     </Progress>;
 });
@@ -168,7 +176,8 @@ export const useProgressUpdate = (task: LazyTask | null, progress: number | unde
 
 export const TaskItem: React.FC<Props> = ({ task }) => {
   const [taskData, loading, error] = useSimpleReference<LazyTask>(task.Reference);
-  const [assigned] = useSimpleCollection<LazyUserInfo>(taskData?.assigned());
+  const [assigned] = useSimpleCollection<LazyUserInfo>(taskData && taskData.assignedUsers.length > 0 ?
+      userReferences.users.where('uid','in', taskData.assignedUsers) : undefined, [taskData?.assignedUsers]);
   const [remoteProgress, setProgress] = useState(taskData?.progress);
   const [localProgress, setLocalProgress] = useState(0);
   const progressRef = useRef<HTMLInputElement>(null);
@@ -182,7 +191,7 @@ export const TaskItem: React.FC<Props> = ({ task }) => {
   
   return <Item >
     <Warning message={error?.message}/>
-    <ProgressBar progress={remoteProgress ?? localProgress} ref={progressRef} dates={taskData && taskData.start ? { start: taskData.start!, end: taskData.end! } : undefined} onChange={setProgress}/>
+    <ProgressBar progress={remoteProgress ?? localProgress} ref={progressRef} dates={taskData && taskData.start ? { start: taskData.start, end: taskData.end } : undefined} onChange={setProgress}/>
     <p onClick={showModal}>{ taskData?.title }</p>
     <UsersRow style={{ marginLeft: 'auto' }}>
       { assigned?.map(user => <UserPic key={user.uid} withTooltip userID={user.uid}/>)}

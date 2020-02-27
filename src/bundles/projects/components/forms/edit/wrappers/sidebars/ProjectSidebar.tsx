@@ -21,7 +21,7 @@ export const ProjectSidebar: React.FC<{ model: Model; onDestroyRequest?: () => v
                              onChange={(value: ProjectState) => setState(last => ({ ...last, state: value }))}>
             <ToggleButton variant="outline-secondary" value={ProjectState.Active}>Active</ToggleButton>
             <ToggleButton variant="outline-secondary" value={ProjectState.OnHold}>On Hold</ToggleButton>
-            <ToggleButton variant="outline-secondary" value={ProjectState.Complete}>Completed</ToggleButton>
+            <ToggleButton variant="outline-secondary" value={ProjectState.Complete}>Complete</ToggleButton>
           </ToggleButtonGroup>
         </Form.Group>
         {/*<div className="form-group">

@@ -1,16 +1,12 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import '../styles/blocks/projects_list.scss';
-import { Row, ToggleButtonGroup, ToggleButton, Button, Alert, Container } from 'react-bootstrap';
-import { useHistory } from 'react-router';
-import { Link } from 'react-router-dom';
-import { LazyProject, ProjectsState } from '../types/index';
-import { useSelector } from 'react-redux';
+import {Alert, Button, Container, Row, ToggleButton, ToggleButtonGroup} from 'react-bootstrap';
+import {Link} from 'react-router-dom';
+import {LazyProject, ProjectState} from '../types/index';
 import ProjectLink from '../components/ProjectLink';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { projectReferences } from '../firebase';
-import { ProjectConverter } from '../firebase/project_converter';
-import { useTypedSelector } from '../../../redux/rootReducer';
-import { useSimpleCollection } from '../../firebase/hooks/useSimpleReference';
+import {projectReferences} from '../firebase';
+import {useTypedSelector} from '../../../redux/rootReducer';
+import {useSimpleCollection} from '../../firebase/hooks/useSimpleReference';
 
 enum Filter {
   Active = 'Active',
@@ -18,12 +14,14 @@ enum Filter {
   Complete = 'Complete',
 }
 
+const equals = (filter: Filter, state: ProjectState) => {
+  if (filter == Filter.Active && state == ProjectState.Active) { return true; }
+  if (filter == Filter.OnHold && state == ProjectState.OnHold) { return true; }
+  return !!(filter == Filter.Complete && state == ProjectState.Complete);
+};
+
 const Projects: React.FC = () => {
   const [filter, setFilter] = useState<Filter>(Filter.Active);
-  const history = useHistory();
-  // const { lazy: projects, isFailed, message } = useSelector<{projectsState: ProjectsState}, ProjectsState>(
-  //   state => state.projectsState);
-  
   const { user } = useTypedSelector(state => state.userState);
   const [projects, loading, isFailed] = useSimpleCollection<LazyProject>(user ? projectReferences.ownedProjects(user) : undefined);
   
@@ -46,7 +44,7 @@ const Projects: React.FC = () => {
     </Row>
     { isFailed && <Alert variant="danger" className="mt-3">{ isFailed?.message }</Alert>}
     <ul className="projects_list">
-      { projects?.map(project => (
+      { projects?.filter(p => equals(filter, p.state)).map(project => (
         <ProjectLink key={project.uid} project={project} className="projects_list__project"/>
       ))}
     </ul>

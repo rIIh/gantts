@@ -27,7 +27,7 @@ export interface GroupState {
 
 export const GroupAtom: React.FC<Props> = ({ group, level }) => {
   const { title } = group;
-  const { sharedState, writeSharedState } = useContext(LGanttContext)!;
+  const { sharedState, writeSharedState, filters: { hideCompleted } } = useContext(LGanttContext)!;
   const groupState = useTypedSelector(state => state.projectsState.calculatedProperties.get(group.uid));
   const meta = sharedState.get(group.uid) as GroupState | undefined;
   const [isHovered, setHovered] = useState(false);
@@ -36,7 +36,17 @@ export const GroupAtom: React.FC<Props> = ({ group, level }) => {
   const [tasks] = useSimpleCollection<LazyTask>(group.tasks());
   
   const { showModal } = useModal(<GroupForm group={group}/>, { size: 'xl', animation: false });
-  
+
+  useEffect(() => {
+      if (groupState?.progress == 100 && hideCompleted && !sharedState.get(group.uid)?.hidden) {
+          writeSharedState(group.uid, { hidden: true });
+      } else if (sharedState.get(group.uid)?.hidden) {
+          writeSharedState(group.uid, { hidden: false });
+      }
+  }, [groupState?.progress, hideCompleted]);
+
+  if (hideCompleted && groupState?.progress == 100) { return null; }
+
   return (
       <>
         <div

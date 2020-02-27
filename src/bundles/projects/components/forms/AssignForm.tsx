@@ -78,19 +78,7 @@ export const AssignModal: React.FC<AssignModalProps> = ({ task, initialValue, on
   useEffect(() => setSelected(initialValue ?? []), [initialValue]);
   
   const onSubmit = useCallback(async (selected: LazyUserInfo[]) => {
-    const assigned = await CachedQueriesInstance.getManyOnce(task.assigned()) as LazyUserInfo[];
-    const promises: Promise<void>[] = [];
-    const deleted = assigned.filter(u => !selected.some(s => s.uid == u.uid));
-    console.log(deleted);
-    for (let deletedUser of deleted) {
-      promises.push(task.assigned().doc(deletedUser.uid).delete());
-    }
-    for (let user of selected) {
-      if (!initialValue?.find(u => user.uid == u.uid)) {
-        promises.push(task.assigned().doc(user.uid).set(user));
-      }
-    }
-    await Promise.all(promises);
+    await task.selfReference().update({ assignedUsers: selected.map(s => s.uid) });
     onHide?.();
   }, []);
   

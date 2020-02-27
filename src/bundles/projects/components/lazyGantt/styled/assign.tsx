@@ -14,7 +14,7 @@ export const AssignedList = styled.span`
 `;
 
 export const Assigned = styled.p`
-  font-size: .725em;
+  //font-size: .725em;
   overflow: hidden;
   margin: 0;
   

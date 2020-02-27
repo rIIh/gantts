@@ -33,11 +33,11 @@ interface TaskSnapshot extends Omit<TaskConstructor, 'project' | 'parentGroup'> 
   type: TaskType;
   subtasks: Subtask[];
   color: Colors<Palette>;
+  assignedUsers: string[];
   project: DocumentReferencePath;
   parentGroup: DocumentReferencePath;
   dependsOn?: DocumentReferencePath[];
   dependentOn?: DocumentReferencePath[];
-  assigned: CollectionReferencePath;
 }
 
 const convertTimestampPropsToDate = <T extends Object>(object: T): T => {
@@ -64,8 +64,7 @@ export const ProjectConverter: firebase.firestore.FirestoreDataConverter<LazyPro
       state: state ?? ProjectState.Active,
       startDate: startDate,
       uid: snapshot.id,
-      comments: comments
-          .sort((l, r) => -l.updatedAt.compareTo(r.updatedAt)),
+      comments: comments?.sort((l, r) => -l.updatedAt.compareTo(r.updatedAt)) ?? [],
       selfReference: () => snapshot.ref.withConverter(ProjectConverter),
       owner: () => FirestoreApp.doc(owner.path).withConverter(UserConverter),
       enrolled: () => FirestoreApp.collection(enrolled).withConverter(UserConverter),
@@ -93,8 +92,7 @@ export const TaskGroupConverter: firebase.firestore.FirestoreDataConverter<LazyT
     const { tasks, taskGroups, comments, ...raw } = convertTimestampPropsToDate(snapshot.data());
     return {
       ...raw,
-      comments: comments
-          .sort((l, r) => -l.updatedAt.compareTo(r.updatedAt)),
+      comments: comments?.sort((l, r) => -l.updatedAt.compareTo(r.updatedAt)) ?? [],
       uid: snapshot.id,
       selfReference: () => snapshot.ref.withConverter(TaskGroupConverter),
       tasks: () => FirestoreApp.collection(tasks).withConverter(TaskConverter),
@@ -115,12 +113,11 @@ export const TaskConverter: firebase.firestore.FirestoreDataConverter<LazyTask> 
   fromFirestore(snapshot: firebase.firestore.QueryDocumentSnapshot<TaskSnapshot>,
       options: firebase.firestore.SnapshotOptions
   ): LazyTask {
-    const { dependentOn, dependsOn, comments, assigned, project, parentGroup, progress, color, ...raw } = convertTimestampPropsToDate(snapshot.data());
+    const { dependentOn, dependsOn, comments, project, parentGroup, progress, color, ...raw } = convertTimestampPropsToDate(snapshot.data());
     return {
       ...raw,
       uid: snapshot.id,
-      comments: comments
-          .sort((l, r) => -l.updatedAt.compareTo(r.updatedAt)),
+      comments: comments?.sort((l, r) => -l.updatedAt.compareTo(r.updatedAt)) ?? [],
       color: Palette[color] != undefined ? color : 'Basic Blue',
       progress: progress == 0 ? undefined : progress,
       selfReference: () => snapshot.ref.withConverter(TaskConverter),
@@ -128,10 +125,9 @@ export const TaskConverter: firebase.firestore.FirestoreDataConverter<LazyTask> 
       dependentOn: dependentOn ? () => dependentOn.map(doc => FirestoreApp.doc(doc.path).withConverter(TaskConverter)) : undefined,
       project: () => FirestoreApp.doc(project.path).withConverter(ProjectConverter),
       parentGroup: () => FirestoreApp.doc(parentGroup.path).withConverter(TaskGroupConverter),
-      assigned: () => FirestoreApp.collection(assigned).withConverter(UserConverter),
     };
   }, toFirestore(modelObject: LazyTask): TaskSnapshot {
-    const { dependentOn, dependsOn, assigned, selfReference, project, parentGroup, progress, ...raw } = modelObject;
+    const { dependentOn, dependsOn, selfReference, project, parentGroup, progress, ...raw } = modelObject;
     const data: TaskSnapshot = {
       ...raw,
       project: { uid: project().id, path: project().path },
@@ -145,7 +141,6 @@ export const TaskConverter: firebase.firestore.FirestoreDataConverter<LazyTask> 
         path: ref?.path,
         uid: ref?.id,
       })) : undefined,
-      assigned: assigned().path,
     };
     return _.omitBy(data, _.isNil) as TaskSnapshot;
   },

@@ -1,28 +1,19 @@
-import { FirebaseAuth } from './../../common/services/firebase';
-import { Dispatch } from 'react';
-import { ActionType } from 'typesafe-actions';
+import {FirebaseAuth} from './../../common/services/firebase';
+import {Dispatch} from 'react';
+import {ActionType} from 'typesafe-actions';
 import projectActions from './actions';
-import { LazyProject, LazyTask, LazyTaskGroup, ProjectCreator, ProjectState, SharedState } from '../types';
-import { projectCollections, projectReferences } from '../firebase';
-import { userReferences } from '../../user/firebase';
-import { UserConverter } from '../../user/firebase/converters/users';
-import { ProjectConverter, TaskGroupConverter } from '../firebase/project_converter';
-import { CachedQueriesInstance } from '../../firebase/cache';
-import { CollectionReference } from '../../firebase/types';
-import { ApplicationState } from '../../../redux/rootReducer';
-import { createInitialGroup } from './lib/createInitialGroup';
+import {LazyProject, LazyTask, LazyTaskGroup, ProjectCreator, ProjectState, SharedState} from '../types';
+import {projectCollections, projectReferences} from '../firebase';
+import {userReferences} from '../../user/firebase';
+import {UserConverter} from '../../user/firebase/converters/users';
+import {ProjectConverter, TaskGroupConverter} from '../firebase/project_converter';
+import {CachedQueriesInstance} from '../../firebase/cache';
+import {CollectionReference} from '../../firebase/types';
+import {ApplicationState} from '../../../redux/rootReducer';
+import {createInitialGroup} from './lib/createInitialGroup';
 import _ from 'lodash';
 
 type RootDispatch = Dispatch<ActionType<typeof projectActions>>;
-//
-// const loadDocuments = (project: string, bucket?: string) => {
-//   return async (dispatch: RootDispatch) => {
-//     const docs: ProjectDoc[] = (await documents(project, bucket).listAll()).items.map(ref => {
-//       CachedQueriesInstance.getOnce(projectReferences.documentsData(project).doc(md5(bucket + ref.)))
-//     });
-//     dispatch(projectActions.documentsReloaded({key: bucket, value:  }))
-//   };
-// };
 
 const recalculateProjectTree = (project: string) => {
   return function(dispatch: RootDispatch, getState: () => ApplicationState) {
@@ -37,7 +28,17 @@ const recalculateProjectTree = (project: string) => {
       const childTasks = tasks.get(group.uid);
       const count = (childGroups?.length ?? 0) + (childTasks?.length ?? 0);
       const childrenProgress = childGroups && childGroups.length > 0 ? childGroups.map(group => calculateProgress(group)).reduce((acc, p) => acc + p) : 0;
-      const tasksProgress = childTasks && childTasks.length > 0 ? childTasks.map(task => task.progress ?? 0).reduce((acc, p) => acc + p) : 0;
+      const tasksProgress = childTasks && childTasks.length > 0 ? childTasks.map(task => {
+        let result: number;
+        if (task.progress) {
+          result = task.progress;
+        } else {
+          result = task.subtasks.length > 0 ?
+              task.subtasks.reduce<number>((acc, st) => st.completed ? acc + 1 : acc, 0) / task.subtasks.length * 100 : 0;
+        }
+        apply(task.uid, { progress: result });
+        return result;
+      }).reduce((acc, p) => acc + p) : 0;
       const result = count > 0 ? (childrenProgress + tasksProgress) / count : 0;
       console.log(result, childrenProgress, tasksProgress, count);
       apply(group.uid, { progress: result });
@@ -133,6 +134,8 @@ export const createProject = (project: ProjectCreator, onCreated: (id: string) =
       }
       const currentUser = FirebaseAuth.currentUser;
       const projectDoc = projectReferences.projects.doc();
+      const user = await CachedQueriesInstance.getOnce(userReferences.users.doc(currentUser.uid));
+      projectDoc.collection(projectCollections.enrolledCollection).withConverter(UserConverter).doc(currentUser.uid).set({ ...user, roles: ['owner'] });
       const lazyProject: LazyProject = {
         uid: projectDoc.id,
         ...project,

@@ -14,6 +14,7 @@ export class GanttTheme implements DefaultTheme {
     progress: 70,
   };
   colors = {
+    dark: '#868686',
     lightgrey: '#eaeaea',
     lightgrey2: '#e7e7e7',
     grey: '#ccc',

@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useState } from 'react';
-import { LazyProject,  } from '../../types';
+import { LazyProject  } from '../../types';
 import { useKeyUp, useRefEffect } from '../../../common/lib/hooks';
 import { MetaBackground, MetaColumn } from './styled/meta';
 import styled from 'styled-components';

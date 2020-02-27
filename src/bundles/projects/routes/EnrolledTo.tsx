@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import { Container } from 'react-bootstrap';
 import { useCollectionReference } from '../../firebase/hooks/useReference';
 import { projectCollections, projectReferences } from '../firebase';
@@ -8,25 +8,25 @@ import { ErrorMessage } from 'formik';
 import { Warning } from '../../common/components/Warning';
 import { TaskItem } from '../components/tasks/TaskItem';
 import { LazyTask } from '../types';
-import { LazyReference } from '../../firebase/types';
+import { FieldPath, LazyReference } from '../../firebase/types';
 import _ from 'lodash';
-import { TaskConverter } from '../firebase/project_converter';
+import { ProjectConverter, TaskConverter } from '../firebase/project_converter';
 import { TaskList } from '../components/tasks/TaskList';
+import ProjectLink from '../components/ProjectLink';
+import {ProjectList} from '../components/list/ProjectList';
 
-const MyTasks: React.FC = () => {
+const EnrolledTo: React.FC = () => {
   const { user } = useTypedSelector(state => state.userState);
-  const [assignedTo, loading, error] = useCollection(user ? projectReferences.assigned(user) : undefined);
-  const taskDocs = _.compact(assignedTo?.docs.map(doc => doc.ref.parent.parent?.withConverter(TaskConverter)));
-  
+  const [enrolledTo] = useCollection(user ? projectReferences.enrolled(user) : undefined);
+  const projectDocs = useMemo(() => _.compact(enrolledTo?.docs.map(doc => doc.ref.parent.parent?.withConverter(ProjectConverter))), [enrolledTo]);
+
+  console.log(user);
   return <Container className="py-5 page__container flex-grow-1">
     <div>
-      <Warning message={ error?.message }/>
       <span style={{ marginRight: '1rem' }}/>
-      <TaskList>
-        { taskDocs?.map(doc => <TaskItem key={doc.id} task={new LazyReference<LazyTask>(doc)}/>) ?? 'No collection' }
-      </TaskList>
+      { projectDocs.map(doc => <ProjectList key={doc.id} doc={doc}/> )}
     </div>
   </Container>;
 };
 
-export default MyTasks;
+export default EnrolledTo;

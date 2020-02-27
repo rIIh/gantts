@@ -54,6 +54,10 @@ export const Doc = styled.div`
   
   > .info {
     flex: 1 0 auto;
+    
+    a {
+      color: ${props => props.theme.colors}
+    }
   }
 `;
 
@@ -215,7 +219,7 @@ export const ModelBody: React.FC<Props> = ({ model, storagePath, onModelChanged,
                   </a>
                 </div>
                 <div className="info">
-                  <strong>{ doc.title }</strong>
+                  <a href={doc.downloadURL}><strong>{ doc.title }</strong></a>
                   <p>{ doc.description }</p>
                   <span className="document-meta">
                     by {doc.author}, {doc.updatedAt.toString('dd/MM/yy')}

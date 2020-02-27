@@ -6,7 +6,7 @@ import { Avatar, UserPic } from '../../../user/components/UserPic';
 import { UsersRow } from '../../../user/routes/AccountSettings';
 import { useDispatch } from 'react-redux';
 import AssignForm, { AssignModal } from '../forms/AssignForm';
-import { CheckField, DropdownLink } from '../lazyGantt/LazyGanttHeader';
+import { CheckField, DropdownLink } from '../lazyGantt/FilterHeader';
 import { LazyUserInfo } from '../../../user/types';
 import { useSimpleCollection, useSimpleReference } from '../../../firebase/hooks/useSimpleReference';
 import { DocumentReference } from '../../../firebase/types';
@@ -18,6 +18,7 @@ import { fractionByTruth, prettyNum } from '../utils';
 import { ColorPill } from '../lazyGantt/styled';
 import { Colors, Palette } from '../../colors';
 import { useModal } from '../../../common/modal/context';
+import {userReferences} from '../../../user/firebase';
 
 interface Props {
   taskReference: DocumentReference;
@@ -25,7 +26,8 @@ interface Props {
 
 export const TaskDetails: React.FC<Props> = ({ taskReference }) => {
   const [task, loading] = useSimpleReference<LazyTask>(taskReference);
-  const [assigned] = useSimpleCollection<LazyUserInfo>(task?.assigned());
+  const [assigned] = useSimpleCollection<LazyUserInfo>(task && task.assignedUsers.length > 0 ?
+      userReferences.users.where('uid','in', task.assignedUsers) : undefined);
   const [subtask, setSubtask] = useState('');
   const dispatch = useDispatch();
   const createSubtask = useCallback(() => {
@@ -132,7 +134,9 @@ export const TaskDetails: React.FC<Props> = ({ taskReference }) => {
       <ListGroup>
         { task.subtasks.map((subtask, index) => (
             <ListGroupItem key={index}>
-              <CheckField label={subtask.title} checked={subtask.completed} onChecked={checked => checkSubtask(checked, index)}/>
+              <CheckField checked={subtask.completed} onChecked={checked => checkSubtask(checked, index)}>
+                {subtask.title}
+              </CheckField>
             </ListGroupItem>
         ))}
         <ListGroupItem>

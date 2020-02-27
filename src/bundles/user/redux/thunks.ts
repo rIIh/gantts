@@ -8,6 +8,7 @@ import { getUserInfo } from '../lib/helpers';
 import { userReferences } from '../firebase';
 import { DocumentReference, LazyCollectionReference, LazyReference } from '../../firebase/types';
 import { CompanyConverter, UserConverter } from '../firebase/converters/users';
+import {CachedQueriesInstance} from "../../firebase/cache";
 
 const Persistence = firebase.auth.Auth.Persistence;
 type RootDispatch = Dispatch<ActionType<typeof userActions>>;
@@ -117,7 +118,7 @@ export const logoutThunk = () => {
   return async (dispatch: Dispatch<ActionType<typeof userActions>>) => {
     dispatch(userActions.logOut.request());
     try {
-      console.log('Accepting invite');
+      console.log(CachedQueriesInstance);
       await FirebaseAuth.signOut();
       dispatch(userActions.logOut.success());
       console.log('logged out');

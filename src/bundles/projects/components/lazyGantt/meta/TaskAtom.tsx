@@ -11,7 +11,7 @@ import { appActions } from '../../../../common/store/actions';
 import _ from 'lodash';
 import { clamp } from '../../../../common/lib/clamp';
 import { useProgressUpdate } from '../../tasks/TaskItem';
-import { DatesFilter } from '../LazyGanttHeader';
+import { DatesFilter } from '../FilterHeader';
 import { TaskDetails } from '../../tasks/TaskDetails';
 import { LazyUserInfo } from '../../../../user/types';
 import { useSimpleCollection } from '../../../../firebase/hooks/useSimpleReference';
@@ -23,6 +23,7 @@ import { diffDays } from '../../../../date/date';
 import { useModal } from '../../../../common/modal/context';
 import { ProjectForm } from '../../forms/edit/wrappers/ProjectForm';
 import { TaskForm } from '../../forms/edit/wrappers/TaskForm';
+import { userReferences } from '../../../../user/firebase';
 
 interface Props {
   task: LazyTask;
@@ -62,7 +63,10 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
   const { sharedState, writeSharedState, filters } = useContext(LGanttContext)!;
   const [isHovered, setHovered] = useState(false);
   const hovered = useHover(({ hovering }) => setHovered(hovering));
-  const [assigned] = useSimpleCollection<LazyUserInfo>(task.assigned());
+  const [assigned] = useSimpleCollection<LazyUserInfo>(
+      task.assignedUsers.length > 0 ?
+      userReferences.users.where('uid','in', task.assignedUsers) : undefined,
+      [task.assignedUsers]);
   const [remoteProgress, setRemoteProgress] = useState(task.progress);
   const progressRef = useRef<HTMLInputElement>(null);
   useEffect(() => { if (remoteProgress == undefined || remoteProgress == 0) { progressRef.current?.blur(); }}, [remoteProgress]);
@@ -92,7 +96,9 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
       }
     }
   }, [task]);
-  
+
+  const { showModal: showTaskDetails } = useModal(task && <TaskDetails taskReference={task.selfReference()}/>);
+
   const hideTask = useCallback((state: boolean) => {
     const hidden = sharedState?.get(task.uid)?.hidden;
     if (state) {
@@ -101,13 +107,13 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
       hidden && writeSharedState(task.uid, { hidden: false });
     }
   }, [sharedState]);
-  
-  const { showModal: showTaskDetails } = useModal(task && <TaskDetails taskReference={task.selfReference()}/>);
-  
+
   useEffect(() => {
     let needToHide = false;
     const hide = () => needToHide = true;
-  
+
+    if (filters.colorsFilter.length > 0 && !filters.colorsFilter.includes(task.color)) { hide(); }
+    if (filters.hideCompleted && (remoteProgress == 100 || (localProgress == 100 && remoteProgress == 0))) { hide(); }
     if (filters.assignedFilter && !assigned?.some(user => filters.assignedFilter?.include.includes(user.uid))) { hide(); }
     switch (filters.dateFilter) {
       case DatesFilter.Completed: {
@@ -192,7 +198,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
   }, [task, showAssigneesModal]);
   
   const { showModal } = useModal(<TaskForm task={task}/>, { size: 'xl', animation: false });
-  
+
   if (sharedState.get(task.uid)?.hidden) { return null; }
   
   return <div

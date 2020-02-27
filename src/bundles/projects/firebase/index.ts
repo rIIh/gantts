@@ -7,7 +7,7 @@ import { LazyUserInfo } from '../../user/types';
 
 class ProjectCollections {
   projectsCollection = 'projects';
-  enrolledCollection = 'enrolled';
+  enrolledCollection = 'project_enrolled';
   assignedCollection = 'assigned';
   taskGroupsCollection = 'task_groups';
   tasksCollection = 'tasks';
@@ -22,8 +22,8 @@ class ProjectReferences extends Firestore {
   projectEnrolled = (project: ProjectID) => this.projects.doc(project).collection(projectCollections.enrolledCollection).withConverter(UserConverter);
   taskGroups = (project: ProjectID) => this.projects.doc(project).collection(projectCollections.taskGroupsCollection).withConverter(TaskGroupConverter);
   tasks = (project: ProjectID, taskGroup: TaskGroupID) => this.taskGroups(project).doc(taskGroup).collection(projectCollections.tasksCollection).withConverter(TaskConverter);
+  enrolled = (user: LazyUserInfo) => FirestoreApp.collectionGroup(projectCollections.enrolledCollection).where('uid', '==', user.uid);
   assigned = (user: LazyUserInfo) => FirestoreApp.collectionGroup(projectCollections.assignedCollection).where('uid', '==', user.uid);
-  documentsData = (project: ProjectID) => this.projects.doc(project).collection(projectCollections.documentsData);
 }
 
 export const documents = (project: string, bucket?: string) => FireStorage.ref(`projects/${project}/documents/${bucket ?? 'root'}/`);

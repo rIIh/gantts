@@ -6,6 +6,9 @@ import { expectSignIn } from './bundles/common/services/firebase';
 import { Overlay, Spinner, Row, Col, Alert, Modal } from 'react-bootstrap';
 import SideMenu from './bundles/common/components/Sidemenu';
 import { useTypedSelector } from './redux/rootReducer';
+import { ThemeProvider } from 'styled-components';
+import { GanttTheme } from './bundles/projects/components/lazyGantt/types';
+import { LGanttContext } from './bundles/projects/components/lazyGantt/LazyGantt';
 
 const AppLayout: React.FC = () => {
   const { user, isLoading, isFailed, message } = useTypedSelector((state) => state.userState);
@@ -39,6 +42,7 @@ const AppLayout: React.FC = () => {
     {/*<Modal show={!_.isNil(activeModal)} onHide={() => dispatch(appActions.hideActiveModal())}>*/}
     {/*  { activeModal }*/}
     {/*</Modal>*/}
+    <ThemeProvider theme={new GanttTheme()}>
     { isLoaded && !isFailed &&
     <Row noGutters className="page">
       <Col className="flex-shrink-1 flex-grow-0" >
@@ -52,6 +56,7 @@ const AppLayout: React.FC = () => {
       </Col>
     </Row>
     }
+    </ThemeProvider>
     { isFailed && (
         <Alert variant="danger">{ message }</Alert>
     ) }

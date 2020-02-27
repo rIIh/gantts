@@ -61,9 +61,9 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
         let metaTarget = document.getElementById(uid!);
         if (metaTarget) {
           setAnchor(true);
-        }
+        } else { setAnchor(false); }
         setOffset(metaTarget?.offsetTop);
-      }, [atomElements]);
+      }, [atomElements, sharedState]);
       
       const [spring, set] = useSpring(() => ({
         left: groupStartCol?.offsetLeft ?? 0,

@@ -1,6 +1,6 @@
 import firebase from 'firebase';
 import I, { Map } from 'immutable';
-import { useEffect, useState } from 'react';
+import {useEffect, useRef, useState} from 'react';
 import { useTraceUpdate } from '../../common/hooks/useTraceUpdate';
 import _ from 'lodash';
 import { CachedQueriesInstance } from '../cache';
@@ -26,24 +26,30 @@ export const useSimpleReference = <Model>(document: firebase.firestore.DocumentR
   return [value, false, null];
 };
 
-export const useSimpleCollection = <Model>(collection?: firebase.firestore.CollectionReference | firebase.firestore.Query): [Model[], boolean, Error | null] => {
+export const useSimpleCollection = <Model>(collection?: firebase.firestore.CollectionReference | firebase.firestore.Query, deps: any[] = []): [Model[], boolean, Error | null] => {
+  const lastDeps = useRef<any[]>(deps);
   const [values, setValues] = useState<Model[]>([]);
   const [reference, setReference] = useState(collection);
   
   useTraceUpdate({ reference });
   
   useEffect(() => {
-    if (!_.isEqualWith(reference, collection, (l, r) => l?.path == r?.path)) {
+    if (!_.isEqualWith(reference, collection, (l, r) => l?.path == r?.path) || !_.isEqual(lastDeps.current, deps)) {
       setReference(collection);
+      if (!_.isEqual(lastDeps.current, deps)) { console.log('deps changed'); }
+      lastDeps.current = deps;
     }
-  }, [collection]);
+  }, [collection, deps]);
   
   useEffect(() => {
     if (reference) {
+      console.log('Reference updated', reference);
       return CachedQueriesInstance.listenCollection(reference, data => {
         setValues(data);
         console.log('Simple collection Hook: new data ', data);
       });
+    } else {
+      setValues([]);
     }
   }, [reference]);
   

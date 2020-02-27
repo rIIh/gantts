@@ -75,12 +75,12 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
           uid: doc.id,
           type: creating == CreatingState.Task ? TaskType.Task : TaskType.Milestone,
           selfReference: () => doc,
-          assigned: () => doc.collection(projectCollections.assignedCollection).withConverter(UserConverter),
           color: 'Basic Blue',
           note: '',
           history: [],
           documents: [],
           comments: [],
+          assignedUsers: [],
           parentGroup: () => FirestoreApp.doc(targetGroup.selfReference().path).withConverter(TaskGroupConverter),
           title: formTitle,
           project: () => FirestoreApp.doc(root.selfReference().path).withConverter(ProjectConverter),
@@ -156,7 +156,7 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
         { testGroups?.map(group => (
             <Fragment key={group.uid}>
               <GroupAtom level={level + 1} group={group}/>
-              { !sharedState.get(group.uid)?.collapsed && (
+              { !sharedState.get(group.uid)?.collapsed && !sharedState.get(group.uid)?.hidden && (
                   <div className="gantt__meta_panel_toolbar"
                        style={{ opacity: toolbar ? undefined : 0, pointerEvents: toolbar ? undefined : 'none' }}>
                     <MetaColumn type="extra"/>

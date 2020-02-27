@@ -10,6 +10,7 @@ export type TaskGroupID = string;
 
 export interface SharedState {
   progress: number;
+  assigned?: LazyUserInfo[];
   start?: Date;
   end?: Date;
 }
@@ -121,7 +122,7 @@ export interface LazyTask extends TaskConstructor {
   selfReference: () => DocumentReference;
   dependsOn?: () => DocumentReference[];
   dependentOn?: () => DocumentReference[];
-  assigned: () => CollectionReference;
+  assignedUsers: string[];
 }
 
 export interface DateRange {
