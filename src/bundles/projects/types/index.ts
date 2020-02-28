@@ -113,7 +113,7 @@ export enum TaskType {
   Task, Milestone,
 }
 
-export interface LazyTask extends TaskConstructor {
+export interface LazyTask extends TaskConstructor, Orderable {
   uid: string;
   color: Colors<Palette>;
   type: TaskType;

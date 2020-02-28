@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { LazyTask, TaskType } from '../../../types';
+import { LazyTask, LazyTaskGroup, TaskType } from '../../../types';
 import { MetaColumn } from '../styled/meta';
-import { useHover } from 'react-use-gesture';
+import { useDrag, useHover } from 'react-use-gesture';
 import styled from 'styled-components';
 import { AssignModal } from '../../forms/AssignForm';
 import { LGanttContext } from '../LazyGantt';
@@ -25,6 +25,12 @@ import { ProjectForm } from '../../forms/edit/wrappers/ProjectForm';
 import { TaskForm } from '../../forms/edit/wrappers/TaskForm';
 import { userReferences } from '../../../../user/firebase';
 import { datesFilters } from '../../../types/filter';
+import { FieldValue } from '../../../../firebase/types';
+import { FirestoreApp } from '../../../../common/services/firebase';
+import { moveTask } from './GroupAtom';
+import { TaskConverter, TaskGroupConverter } from '../../../firebase/project_converter';
+import { projectCollections } from '../../../firebase';
+import { linkedSorter } from '../helpers';
 
 interface Props {
   task: LazyTask;
@@ -62,7 +68,7 @@ const Assigned = styled.p`
 
 export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
   const { title } = task;
-  const { atomsState, writeAtomsState, sharedState, filters } = useContext(LGanttContext)!;
+  const { atomsState, writeAtomsState, writeSharedState, groups, tasks, sharedState, filters } = useContext(LGanttContext)!;
   const [isHovered, setHovered] = useState(false);
   const hovered = useHover(({ hovering }) => setHovered(hovering));
   const [assigned] = useSimpleCollection<LazyUserInfo>(
@@ -151,6 +157,247 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
   }, [task, showAssigneesModal]);
   
   const { showModal } = useModal(<TaskForm task={task}/>, { size: 'xl', animation: false });
+  let lastElement = useRef<{ element: HTMLElement; lastState: { [key: string]: string }; activeSide: -1 | 0 | 1; isToolbar: boolean; isTask: boolean }>(null);
+  const bindDrag = useDrag(({ first, movement: [_, my], last, event }) => {
+    if (first) {
+      event?.preventDefault();
+      writeSharedState( {
+        verticalDraggingSubjectUID: task.uid,
+      });
+    }
+    if (event instanceof MouseEvent) {
+      const { x, y } = { x: event.pageX, y: event.pageY };
+      const elementBelow = document.elementsFromPoint(event.pageX, event.pageY).filter(e => e.matches('[data-group-meta], [data-task-meta],' +
+          ' [data-toolbar-meta]'));
+      if (elementBelow.length > 0) {
+        const target = elementBelow[0] as HTMLElement;
+        const isTask = target.getAttribute('data-task-meta') != undefined;
+        const isToolbar = target.getAttribute('data-toolbar-meta') != undefined;
+        const rect = target.getBoundingClientRect();
+        const side = isToolbar ? 0 : (y > rect.top && y < rect.top + rect.height / 2 ? -1 : (
+            y > rect.top + rect.height / 2 && y < rect.top + rect.height ? 1 : 1
+        ));
+        
+        if (lastElement.current) {
+          Object.entries(lastElement.current.lastState).forEach(([key, val]) => lastElement.current!.element.style.setProperty(key, val));
+        }
+        
+        // @ts-ignore
+        lastElement.current = {
+          element: target,
+          lastState: {
+            'border-top': target.style.borderTop,
+            'background': target.style.background,
+            'border-bottom': target.style.borderBottom,
+          },
+          activeSide: side,
+          isTask,
+          isToolbar,
+        };
+        switch (side) {
+          case -1: target.style.setProperty('border-top', '1px solid black'); break;
+          case 0: target.style.setProperty('background', 'black'); break;
+          case 1: target.style.setProperty('border-bottom', '1px solid black'); break;
+        }
+      } else {
+        if (lastElement.current) {
+          Object.entries(lastElement.current.lastState).forEach(([key, val]) => lastElement.current!.element.style.setProperty(key, val));
+          // @ts-ignore
+          lastElement.current = null;
+        }
+      }
+    }
+    if (last) {
+      resolve();
+      if (lastElement.current) {
+        Object.entries(lastElement.current.lastState).forEach(([key, val]) => lastElement.current!.element.style.setProperty(key, val));
+        // @ts-ignore
+        lastElement.current = null;
+      }
+      writeSharedState( {
+        verticalDraggingSubjectUID: undefined,
+      });
+    }
+  });
+  
+  const resolve = async () => {
+    const target = lastElement.current;
+    const parent = parentStack[parentStack.length - 1];
+    if (!target) { return; }
+    const batch = FirestoreApp.batch();
+    if (target.isTask) {
+      // * place before or after target task in target parent
+      const targetParent = groups.find(g => g.uid == target.element.getAttribute('data-task-parent') ?? '');
+      const targetTask = tasks.find(t => t.uid == target.element.getAttribute('data-task-meta') ?? '');
+      if (!targetParent || !targetTask) { return; }
+      else if (parent == targetParent.uid) {
+        // * dont move task, just change next pointers
+        // * if side -1 -> place before target
+        // * before:  someTask.next -> target.next -> potentially draggedTask
+        // * after: someTask.next -> draggedTask.next -> target.next -> next of draggedTask
+        if (target.activeSide == -1) {
+          const someTask = tasks.find(t => t.next == targetTask.uid);
+          if (someTask) { batch.update(someTask.selfReference(), { next: task.uid }); }
+          if (targetTask.next == task.uid) {
+            batch.update(targetTask.selfReference(), { next: task.next ?? FieldValue.delete() });
+          } else {
+            const taskWithPointerToDraggedTask = tasks.find(_task => _task.next == task.uid);
+            if (taskWithPointerToDraggedTask) { batch.update(taskWithPointerToDraggedTask.selfReference(), { next: task.next ?? FieldValue.delete() }); }
+          }
+          batch.update(task.selfReference(), { next: targetTask.uid });
+        } else if (target.activeSide == 1) {
+          // * if side 1 -> place after target
+          if (targetTask.next == task.uid) { return; }
+          else {
+              batch.update(targetTask.selfReference(), { next: task.uid });
+              batch.update(task.selfReference(), { next: targetTask.next ?? FieldValue.delete() });
+              const taskWithPointerToDraggedTask = tasks.find(_task => _task.next == task.uid);
+              if (taskWithPointerToDraggedTask) { batch.update(taskWithPointerToDraggedTask.selfReference(), { next: task.next ?? FieldValue.delete() }); }
+          }
+        }
+      } else {
+        // * need to move task in target parent collection and handle pointers change
+        // * Task popped from task parent linked collection and pushed to target parent linked collection
+        const taskBeforeDraggedTask = tasks.find(_task => _task.next == task.uid);
+        if (taskBeforeDraggedTask) { batch.update(taskBeforeDraggedTask.selfReference(), { next: task.next ?? FieldValue.delete() }); }
+        // Popped
+        const currentClone: LazyTask = {
+          ...task,
+          parentGroup: () => targetParent.selfReference(),
+          selfReference: () => targetParent.tasks().doc(task.uid),
+          next: target.activeSide == -1 ? targetTask.uid : targetTask.next,
+        };
+        
+        if (target.activeSide == -1) {
+          const taskBeforeTarget = tasks.find(_task => _task.next == targetTask.uid);
+          if (taskBeforeTarget) { batch.update(taskBeforeTarget.selfReference(), { next: task.uid }); }
+        } else {
+          batch.update(targetTask.selfReference(), { next: task.uid });
+        }
+  
+        batch.delete(task.selfReference());
+        batch.set(targetParent.tasks().doc(task.uid), currentClone);
+      }
+    } else if (target.isToolbar) {
+      // * Need to create new group after toolbar parent group
+      const toolbarGroup = groups.find(g => g.uid == target.element.getAttribute('data-toolbar-meta') ?? '');
+      if (toolbarGroup) {
+        const siblingDoc = toolbarGroup.selfReference().parent.doc();
+        const sibling: LazyTaskGroup = {
+          selfReference: () => siblingDoc,
+          uid: siblingDoc.id,
+          tasks: () => siblingDoc.collection(projectCollections.tasksCollection).withConverter(TaskConverter),
+          taskGroups: () => siblingDoc.collection(projectCollections.taskGroupsCollection).withConverter(TaskGroupConverter),
+          comments: [],
+          next: toolbarGroup.next,
+          documents: [],
+          history: [],
+          note: '',
+          title: 'New group',
+          projectID: toolbarGroup.projectID,
+        };
+        batch.set(siblingDoc, sibling);
+        batch.update(toolbarGroup.selfReference(), { next: sibling.uid });
+        const taskBeforeDraggedTask = tasks.find(_task => _task.next == task.uid);
+        if (taskBeforeDraggedTask) { batch.update(taskBeforeDraggedTask.selfReference(), { next: task.next ?? FieldValue.delete() }); }
+        // Popped
+        const currentClone: LazyTask = {
+          ...task,
+          parentGroup: () => sibling.selfReference(),
+          selfReference: () => sibling.tasks().doc(task.uid),
+          next: undefined,
+        };
+  
+        batch.delete(task.selfReference());
+        batch.set(sibling.tasks().doc(task.uid), currentClone);
+      }
+      // * target.next -> ** inserted **.next -> someNextSubject
+    } else {
+      if (target.activeSide == -1) {
+        // * Target is group
+        // * If side -1 place to target parent collection before target
+        const targetGroup = groups.find(g => g.uid == target.element.getAttribute('data-group-meta') ?? '');
+        if (targetGroup) {
+          const groupBefore = groups.find(g => g.next == targetGroup.uid);
+          if (groupBefore?.uid == task.parentGroup().id) {
+            return;
+          } else if (groupBefore) {
+            const taskBeforeDraggedTask = tasks.find(_task => _task.next == task.uid);
+            if (taskBeforeDraggedTask) {
+              batch.update(taskBeforeDraggedTask.selfReference(), { next: task.next ?? FieldValue.delete() });
+            }
+            batch.delete(task.selfReference());
+            // Popped
+            const currentClone: LazyTask = {
+              ...task,
+              parentGroup: () => groupBefore.selfReference(),
+              selfReference: () => groupBefore.tasks().doc(task.uid),
+              next: undefined,
+            };
+            const taskBefore = tasks.find(_t => _t.parentGroup().id == groupBefore.uid && _t.next == undefined);
+            if (taskBefore) {
+              batch.update(taskBefore.selfReference(), { next: currentClone.uid });
+            }
+        
+            batch.set(groupBefore.tasks().doc(task.uid), currentClone);
+          } else {
+            const siblingDoc = targetGroup.selfReference().parent.doc();
+            const sibling: LazyTaskGroup = {
+              selfReference: () => siblingDoc,
+              uid: siblingDoc.id,
+              tasks: () => siblingDoc.collection(projectCollections.tasksCollection).withConverter(TaskConverter),
+              taskGroups: () => siblingDoc.collection(projectCollections.taskGroupsCollection).withConverter(TaskGroupConverter),
+              comments: [],
+              next: targetGroup.uid,
+              documents: [],
+              history: [],
+              note: '',
+              title: 'New group',
+              projectID: targetGroup.projectID,
+            };
+            batch.set(siblingDoc, sibling);
+            batch.update(targetGroup.selfReference(), { next: sibling.uid });
+            const taskBeforeDraggedTask = tasks.find(_task => _task.next == task.uid);
+            if (taskBeforeDraggedTask) {
+              batch.update(taskBeforeDraggedTask.selfReference(), { next: task.next ?? FieldValue.delete() });
+            }
+            // Popped
+            const currentClone: LazyTask = {
+              ...task,
+              parentGroup: () => sibling.selfReference(),
+              selfReference: () => sibling.tasks().doc(task.uid),
+              next: undefined,
+            };
+        
+            batch.delete(task.selfReference());
+            batch.set(sibling.tasks().doc(task.uid), currentClone);
+          }
+        }
+      } else if (target.activeSide == 1) {
+        // * else place inside target collection in start
+        const targetGroup = groups.find(g => g.uid == target.element.getAttribute('data-group-meta') ?? '');
+        if (targetGroup) {
+          const taskBeforeDraggedTask = tasks.find(_task => _task.next == task.uid);
+          if (taskBeforeDraggedTask) {
+            batch.update(taskBeforeDraggedTask.selfReference(), { next: task.next ?? FieldValue.delete() });
+          }
+          batch.delete(task.selfReference());
+          // Popped
+      
+          const firstTask = tasks.filter(t => t.parentGroup().id == targetGroup.uid).sort(linkedSorter(el => el.uid))[0];
+          const currentClone: LazyTask = {
+            ...task,
+            parentGroup: () => targetGroup.selfReference(),
+            selfReference: () => targetGroup.tasks().doc(task.uid),
+            next: firstTask?.uid,
+          };
+      
+          batch.set(targetGroup.tasks().doc(task.uid), currentClone);
+        }
+      }
+    }
+    await batch.commit();
+  };
 
   if (atomsState.get(task.uid)?.hidden) { return null; }
   
@@ -167,6 +414,9 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
       <ExtraTools target={task} withChecklist isParentHovered={isHovered}/>
     </MetaColumn>
     <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 18px)` }}>
+      <span className="project_manager__task_group_move" style={{ display: !isHovered ? 'none' : undefined }} {...bindDrag()}>
+        <span className="fas fa-arrows-alt-v"/>
+      </span>
       {<span>{title}</span>}
       <span className="gantt__atom_meta_toolbar" style={{ display: isHovered ? undefined : 'none' }}>
       <span className="badge toolbar__button link" onClick={showModal}>

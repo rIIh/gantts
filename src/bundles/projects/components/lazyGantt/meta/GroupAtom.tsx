@@ -33,7 +33,7 @@ export interface GroupState {
   collapsed?: boolean;
 }
 
-const moveTask = async (from: string, to: string, batch: firebase.firestore.WriteBatch = FirestoreApp.batch(), initial = true) => {
+export const moveTask = async (from: string, to: string, batch: firebase.firestore.WriteBatch = FirestoreApp.batch(), initial = true) => {
   const fromRef = FirestoreApp.doc(from).withConverter(TaskConverter);
   const toRef = FirestoreApp.doc(to).withConverter(TaskConverter);
   
@@ -48,7 +48,7 @@ const moveTask = async (from: string, to: string, batch: firebase.firestore.Writ
   batch.set(toRef, currentClone);
 };
 
-const moveGroup = async (from: string, to: string, batch: firebase.firestore.WriteBatch = FirestoreApp.batch(), initial = true) => {
+export const moveGroup = async (from: string, to: string, batch: firebase.firestore.WriteBatch = FirestoreApp.batch(), initial = true) => {
   const fromRef = FirestoreApp.doc(from).withConverter(TaskGroupConverter);
   const toRef = FirestoreApp.doc(to).withConverter(TaskGroupConverter);
   
@@ -217,7 +217,10 @@ export const GroupAtom: React.FC<Props> = ({ group, level, parentStack }) => {
 
   if (hideCompleted && groupState?.progress == 100) { return null; }
   
-  const ignoreDrag = parentStack.includes(sharedState.verticalDraggingSubjectUID ?? '') || group.uid == sharedState.verticalDraggingSubjectUID;
+  const ignoreDrag =
+      parentStack.includes(sharedState.verticalDraggingSubjectUID ?? '') ||
+      group.uid == sharedState.verticalDraggingSubjectUID ||
+      groupTasks.some(t => t.uid == sharedState.verticalDraggingSubjectUID);
 
   return (
       <>
@@ -266,7 +269,7 @@ export const GroupAtom: React.FC<Props> = ({ group, level, parentStack }) => {
         </div>
         { !meta?.collapsed && (
             <>
-              { groupTasks?.map(task => <TaskAtom key={task.uid} task={task} parentStack={[...parentStack, group.uid]} level={level + 1}/>)}
+              { groupTasks?.sort(linkedSorter(el => el.uid)).map(task => <TaskAtom key={task.uid} task={task} parentStack={[...parentStack, group.uid]} level={level + 1}/>)}
               { subGroups?.sort(linkedSorter(el => el.uid)).reverse().map(_group => <GroupAtom key={_group.uid} parentStack={[...parentStack, group.uid]} level={level + 1} group={_group}/>)}
             </>
         )}
