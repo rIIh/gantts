@@ -2,7 +2,6 @@ import { Orderable } from '../../../types';
 
 export const getDateColumnFromPoint = ({ x, y }: { x: number; y: number }) => document.elementsFromPoint(x, y).find(elem => elem.className.includes('day-data'));
 export const linkedSorter = <T extends Orderable>(by: (el: T) => any) => (left: T, right: T) => {
-  console.log(left.next, by(right), left.next == by(right));
   return right.next == null ? -1 : (right.next == by(left) ? 1 : -1);
 };
 
