@@ -7,6 +7,7 @@ import { useHover } from 'react-use-gesture';
 import { useCollectionReference } from '../../../firebase/hooks/useReference';
 import { GroupAtom } from './meta/GroupAtom';
 import { ProjectAtom } from './meta/ProjectAtom';
+import { BottomBarMeta } from './LazyGanttBottomBar';
 
 const BackgroundColumn = styled(MetaColumn)<{ title?: string }>`
   position: relative;
@@ -52,6 +53,7 @@ export const LazyGanttMetaPanel: React.FC<{ project: LazyProject }> = ({ project
     </div>
     <Header/>
     <ProjectAtom root={project} level={1} toolbar={showToolbar}/>
+    <BottomBarMeta/>
   {/* !  Place atoms here */}
   </div>;
 };

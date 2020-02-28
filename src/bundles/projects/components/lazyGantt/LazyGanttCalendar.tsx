@@ -4,7 +4,7 @@ import useComponentSize from '@rehooks/component-size';
 import { DateStep, IterableDate } from '../../../date/iterableDate';
 import { dayToWeekBit, weekBitToDay } from '../../utils';
 import GroupAtom from './calendar/GroupAtom';
-import { Map } from 'immutable';
+import I from 'immutable';
 import { Linker } from './calendar/Linker';
 import { log, useTraceUpdate } from '../../../common/hooks/useTraceUpdate';
 import { noop } from '../../../common/lib/noop';
@@ -16,14 +16,15 @@ import { ProjectLine } from './calendar/ProjectLine';
 import { LGanttContext } from './LazyGantt';
 import { useTypedSelector } from '../../../../redux/rootReducer';
 import { CachedQueriesInstance } from '../../../firebase/cache';
+import { BottomBarCalendar } from './LazyGanttBottomBar';
 
 interface CalendarContextType {
-  atomElements: Map<string, HTMLElement>;
+  atomElements: I.Map<string, HTMLElement>;
   setAtomRef: (taskID: string, element: HTMLElement | null) => void;
 }
 
 export const CalendarContext = createContext<CalendarContextType>({
-  atomElements: Map<string, HTMLElement>(),
+  atomElements: I.Map<string, HTMLElement>(),
   setAtomRef: noop,
 });
 
@@ -43,13 +44,17 @@ const Header = styled.p`
 
 const DateColumn = styled.div<{ lastInWeek?: boolean; isToday?: boolean; isWeekend?: boolean }>`
   height: 100%;
-  width: 29px;
   flex: 0 0 auto;
   font-size: 11px;
   padding: 4px 0 0;
   box-sizing: border-box;
   text-align: center;
   color: #555960;
+  width: ${props => props.theme.colWidth}px;
+
+  &:last-child {
+    width: ${props => props.theme.colWidth - 1}px;
+  }
   
   ${props => (props.isWeekend) && css`
     background-color: ${({ theme }) => theme.colors.weekend};
@@ -89,7 +94,7 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
   useTraceUpdate({ tasks, groups });
   
   const [links, setLinks] = useState<[string, string, boolean, boolean][] | null>(null);
-  const [atomElements, setAtomElements] = useState(Map<string, HTMLElement>());
+  const [atomElements, setAtomElements] = useState(I.Map<string, HTMLElement>());
   
   let promise: Promise<void> | null = null;
   const relink = (async () => {
@@ -222,6 +227,8 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
       []
   );
   
+  const dates = useRef<Map<Date, HTMLDivElement>>(new Map());
+  
   if (loading || error) { return <Spinner animation="grow"/>;}
   
   return <CalendarContext.Provider value={{
@@ -247,15 +254,11 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
                         <DateColumn
                             key={dayDate.toString()}
                             id={dayDate.toDateString()}
+                            ref={ref => { if (ref) { dates.current.set(dayDate, ref); } else { dates.current.delete(dayDate); }}}
                             className="day-data"
                             lastInWeek={day == lastDayInWeek} isToday={dayDate.isToday(Date.today())} isWeekend={day == 6 || day == 0}>
                           {dayDate.toString('dd')}
                         </DateColumn>
-                        // {/*<div key={dayDate.toString()}*/}
-                        // {/*     id={dayDate.toDateString()}*/}
-                        // {/*     className={'day-data gantt__calendar_column' + (day === lastDayInWeek ? ' gantt__calendar_column--last_in_week' : '')}>*/}
-                        // {/*  {dayDate.toString('dd')}*/}
-                        // {/*</div>*/}
                     );
                   })}
               </div>
