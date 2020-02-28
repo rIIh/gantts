@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { CSSProperties, useContext } from 'react';
 import styled from 'styled-components';
 import _ from 'lodash';
 import I from 'immutable';
@@ -16,11 +16,14 @@ const BottomBar = styled.div`
 
 const Row = styled.div`
   height: ${props => props.theme.atomHeight}px;
+  border-bottom: 1px solid ${props => props.theme.colors.lightgrey};
   width: 100%;
+  font-size: 0.9em;
 `;
 
 const FlexRow = styled(Row)`
   display: flex;
+  align-items: center;
   flex-flow: row nowrap;
 `;
 
@@ -41,15 +44,26 @@ const StyledBottomBarMeta = styled.div`
   position: absolute;
   width: 100%;
   bottom: 0;
-  background-color: lightgreen;
+  background-color: white;
+  border-top: 1px solid ${props => props.theme.colors.lightgrey};
   text-align: end;
   padding-bottom: ${props => props.theme.atomHeight}px;
 `;
+
 const StyledBottomBarCalendar = styled.div`
   position: absolute;
   width: 100%;
   bottom: 0;
-  background-color: lightgreen;
+  background-color: white;
+  border-top: 1px solid ${props => props.theme.colors.lightgrey};
+  padding-bottom: ${props => props.theme.atomHeight - 15}px;
+`;
+
+const MetaRow = styled(Row)`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 1rem;
 `;
 
 export const BottomBarMeta: React.FC = () => {
@@ -57,23 +71,51 @@ export const BottomBarMeta: React.FC = () => {
   const [enrolledUsers] = useSimpleCollection<LazyUserInfo>(project.enrolled());
   
   return <StyledBottomBarMeta>
-    { enrolledUsers.map(u => <Row key={u.uid}>{ u.displayName }</Row>)}
-    <Row>Unassigned</Row>
+    { enrolledUsers.map(u => <MetaRow key={u.uid}>{ u.displayName }</MetaRow>)}
+    <MetaRow>Unassigned</MetaRow>
   </StyledBottomBarMeta>;
 };
 
-const Mark = styled.div`
+const Mark = styled.div.attrs<{ value?: number }>(({ value = 0 }) => {
+  let background: string = 'transparent';
+  switch (value) {
+    case 1: background = '#f3f3d4'; break;
+    case 2: background = '#f9f960'; break;
+    case 3: background = '#f7e941'; break;
+    case 4: background = '#f6d041'; break;
+    case 5: background = '#f5b840'; break;
+  }
+  return ({
+    children: value,
+    style: {
+      color: value != 0 ? 'black' : 'lightgrey',
+      backgroundColor: background,
+    } as CSSProperties,
+  });
+})<{ value?: number }>`
   width: ${props => props.theme.colWidth}px;
   height: ${props => props.theme.atomHeight}px;
-  border: 1px solid grey;
   flex: 0 1 ${props => props.theme.colWidth}px;
-  font-size: 0.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
 `;
 
 export const BottomBarCalendar: React.FC<{dates: Map<Date, HTMLDivElement>; mask: WeekBitMask}> = ({ dates, mask }) => {
+  const { project, tasks } = useContext(LGanttContext)!;
+  const [enrolledUsers] = useSimpleCollection<LazyUserInfo>(project.enrolled());
   return <StyledBottomBarCalendar>
-    <FlexRow>{ [...dates.keys()].map(date => {
-      return <Mark key={date.getTime()}>{date.toString('dd.MM.yy')}</Mark>;
+    { enrolledUsers.map(user => (
+        <FlexRow key={user.uid}>{ [...dates.keys()].map(date => {
+          return <Mark value={tasks.filter(task => task.assignedUsers.some(id => user.uid == id) && task.start && task.end && date.between(task.start, task.end)).length} key={date.getTime()}/>;
+        })}</FlexRow>
+    )) }
+    <FlexRow id="unassigned-bottom-row">{ [...dates.keys()].map(date => {
+      return <Mark key={date.getTime()} value={tasks.filter(task => task.assignedUsers.length == 0 && task.start && task.end && date.between(task.start, task.end)).length}/>;
     })}</FlexRow>
   </StyledBottomBarCalendar>;
 };
