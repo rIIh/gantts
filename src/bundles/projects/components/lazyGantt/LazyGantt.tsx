@@ -11,6 +11,7 @@ import { Filters } from '../../types/filter';
 import { CachedQueriesInstance } from '../../../firebase/cache';
 import { FieldPath } from '../../../firebase/types';
 import { useTypedSelector } from '../../../../redux/rootReducer';
+import { LazyGanttBottomBar } from './LazyGanttBottomBar';
 
 export interface Meta {
   [key: string]: any;

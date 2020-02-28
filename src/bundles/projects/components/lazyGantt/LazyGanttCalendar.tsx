@@ -266,6 +266,7 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
         )}
         <ProjectLine width={0} left={0} {...getProjectDates}/>
         {atoms}
+        { dates.current && <BottomBarCalendar dates={dates.current} mask={weekMask}/> }
       </div>
     </div>
   </CalendarContext.Provider>;
