@@ -24,9 +24,11 @@ import { useModal } from '../../../../common/modal/context';
 import { ProjectForm } from '../../forms/edit/wrappers/ProjectForm';
 import { TaskForm } from '../../forms/edit/wrappers/TaskForm';
 import { userReferences } from '../../../../user/firebase';
+import { datesFilters } from '../../../types/filter';
 
 interface Props {
   task: LazyTask;
+  parentStack: string[];
   level: number;
 }
 
@@ -58,9 +60,9 @@ const Assigned = styled.p`
   }
 `;
 
-export const TaskAtom: React.FC<Props> = ({ task, level }) => {
+export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
   const { title } = task;
-  const { sharedState, writeSharedState, filters } = useContext(LGanttContext)!;
+  const { atomsState, writeAtomsState, sharedState, filters } = useContext(LGanttContext)!;
   const [isHovered, setHovered] = useState(false);
   const hovered = useHover(({ hovering }) => setHovered(hovering));
   const [assigned] = useSimpleCollection<LazyUserInfo>(
@@ -88,11 +90,11 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
   
   useEffect(() => {
     if (!task.progress || task.progress == 0) {
-      const lastState = sharedState?.get(task.uid)?.progress as number | undefined;
+      const lastState = atomsState?.get(task.uid)?.progress as number | undefined;
       const newState = task.subtasks.length > 0 ? _.without(task.subtasks.map(st => st.completed), false).length / task.subtasks.length * 100 : 0;
       if (lastState != newState) {
         setProgress(newState);
-        writeSharedState(task.uid, { progress: newState });
+        writeAtomsState(task.uid, { progress: newState });
       }
     }
   }, [task]);
@@ -100,13 +102,13 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
   const { showModal: showTaskDetails } = useModal(task && <TaskDetails taskReference={task.selfReference()}/>);
 
   const hideTask = useCallback((state: boolean) => {
-    const hidden = sharedState?.get(task.uid)?.hidden;
+    const hidden = atomsState?.get(task.uid)?.hidden;
     if (state) {
-      hidden || writeSharedState(task.uid, { hidden: true });
+      hidden || writeAtomsState(task.uid, { hidden: true });
     } else {
-      hidden && writeSharedState(task.uid, { hidden: false });
+      hidden && writeAtomsState(task.uid, { hidden: false });
     }
-  }, [sharedState]);
+  }, [atomsState]);
 
   useEffect(() => {
     let needToHide = false;
@@ -114,57 +116,8 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
 
     if (filters.colorsFilter.length > 0 && !filters.colorsFilter.includes(task.color)) { hide(); }
     if (filters.hideCompleted && (remoteProgress == 100 || (localProgress == 100 && remoteProgress == 0))) { hide(); }
-    if (filters.assignedFilter && !assigned?.some(user => filters.assignedFilter?.include.includes(user.uid))) { hide(); }
-    switch (filters.dateFilter) {
-      case DatesFilter.Completed: {
-        if (remoteProgress != 100 && localProgress != 100) { hide(); }
-        break;
-      }
-      case DatesFilter.DueToday: {
-        if (!task.end || !task.end.isToday(Date.today())) { hide(); }
-        break;
-      }
-      case DatesFilter.DueWithinOneWeek: {
-        if (!task.end || !task.end.between(Date.today(), Date.today().addWeeks(1))) { hide(); }
-        break;
-      }
-      case DatesFilter.DueWithinTwoWeek: {
-        if (!task.end || !task.end.between(Date.today(), Date.today().addWeeks(2))) { hide(); }
-        break;
-      }
-      case DatesFilter.DueWithinFourWeek: {
-        if (!task.end || !task.end.between(Date.today(), Date.today().addWeeks(4))) { hide(); }
-        break;
-      }
-      case DatesFilter.NotScheduled: {
-        if (task.start && task.end) { hide(); }
-        break;
-      }
-      case DatesFilter.StartingWithinOneWeek: {
-        if (!task.start || !task.start.between(Date.today(), Date.today().addWeeks(1))) { hide(); }
-        break;
-      }
-      case DatesFilter.StartingWithinTwoWeek: {
-        if (!task.start || !task.start.between(Date.today(), Date.today().addWeeks(2))) { hide(); }
-        break;
-      }
-      case DatesFilter.StartingWithinFourWeek: {
-        if (!task.start || !task.start.between(Date.today(), Date.today().addWeeks(4))) { hide(); }
-        break;
-      }
-      case DatesFilter.InProgress: {
-        if (task.start && task.end && !Date.today().between(task.start, task.end)) { hide(); }
-        break;
-      }
-      case DatesFilter.OnlyMilestones: {
-        if (task.type != TaskType.Milestone) { hide(); }
-        break;
-      }
-      case DatesFilter.Overdue: {
-        if (!(localProgress != 100 && remoteProgress != 100 && task.end && task.end.compareTo(Date.today()) < 0)) { hide(); }
-        break;
-      }
-    }
+    if (filters.usersFilter && filters.usersFilter.include.length > 0 && !assigned?.some(user => filters.usersFilter?.include.includes(user.uid))) { hide(); }
+    if (!datesFilters.get(filters.dateFilter)!(task)) { hide(); }
   
     if (needToHide) {
       hideTask(true);
@@ -199,17 +152,21 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
   
   const { showModal } = useModal(<TaskForm task={task}/>, { size: 'xl', animation: false });
 
-  if (sharedState.get(task.uid)?.hidden) { return null; }
+  if (atomsState.get(task.uid)?.hidden) { return null; }
   
   return <div
       id={task.uid}
+      data-atom-meta={task.uid}
+      data-task-meta={task.uid}
+      data-task-parent={task.parentGroup().id}
       className={'gantt__atom_meta' + (isHovered ? ' gantt__atom_meta--active' : '')}
+      style={parentStack.includes(sharedState.verticalDraggingSubjectUID ?? '') ? { pointerEvents: 'none', color: 'lightgrey' } : {}}
       {...hovered()}
   >
     <MetaColumn type="extra">
       <ExtraTools target={task} withChecklist isParentHovered={isHovered}/>
     </MetaColumn>
-    <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 8px)` }}>
+    <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 18px)` }}>
       {<span>{title}</span>}
       <span className="gantt__atom_meta_toolbar" style={{ display: isHovered ? undefined : 'none' }}>
       <span className="badge toolbar__button link" onClick={showModal}>
@@ -217,7 +174,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level }) => {
       </span>
       <span className="badge toolbar__button link" onClick={() => {
         (async () => {
-          await clearDependencies(task);
+          // await clearDependencies(task);
           await task.selfReference().delete();
         })();
       }}>

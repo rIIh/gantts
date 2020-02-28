@@ -118,6 +118,7 @@ export const logoutThunk = () => {
   return async (dispatch: Dispatch<ActionType<typeof userActions>>) => {
     dispatch(userActions.logOut.request());
     try {
+      CachedQueriesInstance.clear();
       console.log(CachedQueriesInstance);
       await FirebaseAuth.signOut();
       dispatch(userActions.logOut.success());

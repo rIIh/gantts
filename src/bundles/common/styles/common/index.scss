@@ -7,6 +7,14 @@ h1, h2, h3, h4, h5 {
   padding: 0;
 }
 
+b, strong {
+  font-weight: bold;
+}
+
+b, p, strong, h1, h2, h3, h4, h5, h6 {
+  color: #131313;
+}
+
 body {
   height: 100vh;
 

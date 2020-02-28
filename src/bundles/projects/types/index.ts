@@ -81,7 +81,6 @@ export enum WeekBitMask {
 type DocumentID = string;
 
 export interface Orderable {
-  past?: DocumentID;
   next?: DocumentID;
 }
 

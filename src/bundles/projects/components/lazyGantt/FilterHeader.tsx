@@ -9,6 +9,7 @@ import { useSimpleCollection } from '../../../firebase/hooks/useSimpleReference'
 import { Colors, Palette } from '../../colors';
 import { ColorPill } from './styled';
 import {LazyProject} from '../../types';
+import { Filters } from '../../types/filter';
 
 const Header = styled.div`
   width: 100%;
@@ -47,6 +48,7 @@ export enum DatesFilter {
 interface Props {
   project: LazyProject;
   hiddenCount: number;
+  initial: Filters;
   onAssignedFilter?: (newFilter: AssignedFilter) => void;
   onDateFilter?: (newFilter: DatesFilter) => void;
   onColorsFilter?: (colors: Colors<Palette>[]) => void;
@@ -93,18 +95,18 @@ export const CheckField: React.FC<{ checked?: boolean; onChecked?: (checked: boo
     </InputGroup>;
 };
 
-export const FilterHeader: React.FC<Props> = ({ project, hiddenCount, onAssignedFilter, onCompletedFilter, onColorsFilter, onDateFilter }) => {
+export const FilterHeader: React.FC<Props> = ({ project, initial, hiddenCount, onAssignedFilter, onCompletedFilter, onColorsFilter, onDateFilter }) => {
   const [enrolled] = useSimpleCollection<LazyUserInfo>(project.enrolled());
-  const [checkedUsers, setCheckedUsers] = useState(Set<string>());
+  const [checkedUsers, setCheckedUsers] = useState(Set<string>(initial.usersFilter.include));
   useEffect(() => onAssignedFilter?.({ include: checkedUsers.toArray() }), [checkedUsers]);
   
-  const [dateFilter, setDateFilter] = useState<DatesFilter>(DatesFilter.All);
+  const [dateFilter, setDateFilter] = useState<DatesFilter>(initial.dateFilter);
   useEffect(() => onDateFilter?.(dateFilter), [dateFilter]);
 
-  const [completedFilter, setCompletedFilter] = useState(false);
+  const [completedFilter, setCompletedFilter] = useState(initial.hideCompleted);
   useEffect(() => onCompletedFilter?.(completedFilter), [completedFilter]);
 
-  const [colorsFilter, setColorsFilter] = useState<Set<Colors<Palette>>>(Set());
+  const [colorsFilter, setColorsFilter] = useState<Set<Colors<Palette>>>(Set(initial.colorsFilter));
   useEffect(() => onColorsFilter?.(colorsFilter.toArray()), [colorsFilter]);
 
   const colorFilterName = useCallback(() => {

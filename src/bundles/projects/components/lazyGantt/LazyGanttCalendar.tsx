@@ -15,6 +15,7 @@ import styled, { css } from 'styled-components';
 import { ProjectLine } from './calendar/ProjectLine';
 import { LGanttContext } from './LazyGantt';
 import { useTypedSelector } from '../../../../redux/rootReducer';
+import { CachedQueriesInstance } from '../../../firebase/cache';
 
 interface CalendarContextType {
   atomElements: Map<string, HTMLElement>;
@@ -83,6 +84,7 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
   const [groups, loading, error] = useSimpleCollection<LazyTaskGroup>(project.taskGroups());
   const [tasks] = useMultiCollection<LazyTask>(groups?.map(g => g.tasks()));
   const projectState = useTypedSelector(state => state.projectsState.calculatedProperties.get(project.uid));
+  const tasksInStore = useTypedSelector(state => state.projectsState.tasks.filter(value => value && value.length > 0 && value[0].project().id == project.uid || true));
   
   useTraceUpdate({ tasks, groups });
   
@@ -90,28 +92,31 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
   const [atomElements, setAtomElements] = useState(Map<string, HTMLElement>());
   
   let promise: Promise<void> | null = null;
+  const relink = (async () => {
+    const newLinks: [string, string, boolean, boolean][] = [];
+    for (let task of [...tasksInStore.values()].flat(1)) {
+      for (let dependency of task?.dependsOn?.() ?? []) {
+        newLinks.push([
+          dependency.id,
+          task.uid,
+          atomElements.get(dependency.id)?.getAttribute('data-milestone') != undefined,
+          atomElements.get(task.uid)?.getAttribute('data-milestone') != undefined,
+        ]);
+      }
+    }
+    if (!_.isEqual(newLinks, links)) {
+      console.log('Tasks was changed');
+      setLinks(newLinks);
+      promise = null;
+    }
+  });
   useEffect(() => {
-    promise = promise || (async () => {
-      const newLinks: [string, string, boolean, boolean][] = [];
-      for (let task of tasks.flat(1)) {
-        for (let dependency of task.dependsOn?.() ?? []) {
-          const depTask = (await dependency.get()).data() as LazyTask;
-          if (!depTask) { continue; }
-          newLinks.push([
-            depTask.uid,
-            task.uid,
-            depTask.type == TaskType.Milestone,
-            task.type == TaskType.Milestone,
-          ]);
-        }
-      }
-      if (!_.isEqual(newLinks, links)) {
-        console.log('Tasks was changed');
-        setLinks(newLinks);
-        promise = null;
-      }
-    })();
-  }, [tasks]);
+    if (promise) {
+      promise.then(() => promise = relink());
+    } else {
+      promise = relink();
+    }
+  }, [atomElements, tasksInStore]);
   
   useEffect(() => {
     setIterableDate(new IterableDate(startDate.clone(), endMonth));

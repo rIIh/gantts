@@ -4,11 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { UserState } from '../../user/types';
 import { logoutThunk } from '../../user/redux/thunks';
 import { UserPic } from '../../user/components/UserPic';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 const Header: React.FC = () => {
   const { user } = useSelector<{ userState: UserState }, UserState>((state) => state.userState);
   const dispatch = useDispatch();
+  const history = useHistory();
 
   return <div className="header">
     <Container fluid className="header__container">
@@ -36,7 +37,10 @@ const Header: React.FC = () => {
                 <span className="mr-2">
                   You’re logged in as {user?.displayName}
                 </span>
-                <button className="link" onClick={() => dispatch(logoutThunk())}>
+                <button className="link" onClick={() => {
+                  history.push('/login');
+                  dispatch(logoutThunk());
+                }}>
                   Log out
                 </button>
               </Popover.Title>

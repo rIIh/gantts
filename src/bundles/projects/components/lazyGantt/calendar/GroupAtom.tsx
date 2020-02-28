@@ -18,10 +18,14 @@ import { useTypedSelector } from '../../../../../redux/rootReducer';
 import { diffDays } from '../../../../date/date';
 import { useSpring, animated } from 'react-spring';
 import { IterableDate } from '../../../../date/iterableDate';
+import { DocumentReference } from '../../../../firebase/types';
+import { CachedQueriesInstance } from '../../../../firebase/cache';
+import firebase from 'firebase';
 
 interface Props {
   group: LazyTaskGroup;
   getDateColumn: (date: Date) => HTMLElement;
+  underGroup?: boolean;
   groupDatesChanged: (group: LazyTaskGroup, start: Date, end: Date) => void;
 }
 
@@ -29,18 +33,38 @@ enum DragType {
   Horizontal, None,
 }
 
+const shiftGroup = async (group: LazyTaskGroup, days: number, batch: firebase.firestore.WriteBatch = FirestoreApp.batch(), initial = true) => {
+  const tasks = await CachedQueriesInstance.getManyOnce<LazyTask>(group.tasks());
+  const groups = await CachedQueriesInstance.getManyOnce<LazyTaskGroup>(group.taskGroups());
+  for (let task of tasks) {
+    if (task.start) {
+      batch.update(task.selfReference(),{
+        start: task.start?.clone().addDays(days),
+        end: task.end?.clone().addDays(days),
+      });
+    }
+  }
+  for (let group of groups) {
+    await shiftGroup(group, days, batch, false);
+  }
+  if (initial) {
+    await batch.commit();
+  }
+};
+
 const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
     (
-        { group, getDateColumn, groupDatesChanged, ...events }, ref
+        { group, getDateColumn, groupDatesChanged, underGroup, ...events }, ref
     ) => {
       const { uid } = group;
       const [tasks] = useSimpleCollection<LazyTask>(group.tasks());
+      const [subGroups] = useSimpleCollection<LazyTaskGroup>(group.taskGroups());
       const [selected, setSelected] = useState(false);
       const { atomElements, setAtomRef } = useContext(CalendarContext);
       const [hasAnchor, setAnchor] = useState(false);
-      const { sharedState } = useContext(LGanttContext)!;
+      const { atomsState, groups, tasks: allTasks } = useContext(LGanttContext)!;
       const groupState = useTypedSelector(state => state.projectsState.calculatedProperties.get(group.uid));
-      const shared = sharedState.get(group.uid) as { collapsed?: boolean };
+      const shared = atomsState.get(group.uid) as { collapsed?: boolean };
       const initialized = groupState != null && groupState.start;
       
       let metaTarget = document.getElementById(uid!);
@@ -63,7 +87,7 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
           setAnchor(true);
         } else { setAnchor(false); }
         setOffset(metaTarget?.offsetTop);
-      }, [atomElements, sharedState]);
+      }, [atomElements, atomsState, groups, allTasks]);
       
       const [spring, set] = useSpring(() => ({
         left: groupStartCol?.offsetLeft ?? 0,
@@ -79,7 +103,7 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
       const [dragV, setDrag] = useState(0);
       
       const bind = useHover(({ hovering }) => setSelected(hovering));
-      let batching: Promise<void[]> | null = null;
+      let batching: Promise<void> | null = null;
       const drag = useDrag(({ down, first, last, event, cancel, movement: [mx] }) => {
         if (batching) {
           cancel?.();
@@ -103,19 +127,23 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
               const newStart = new Date(dateColumn.id);
               const diff = diffDays(currentStart, newStart);
               if (Math.abs(diff) > 0) {
-                const batch: Promise<void>[] = [];
-                for (let task of tasks) {
-                  if (task.start) {
-                    batch.push(task.selfReference().update({
-                      start: task.start?.clone().addDays(diff),
-                      end: task.end?.clone().addDays(diff),
-                    }));
-                  }
-                }
-                batching = Promise.all(batch);
+                batching = shiftGroup(group, diff);
                 batching.then(() => {
                   batching = null;
                 });
+                // for (let task of tasks) {
+                //   if (task.start) {
+                //     batch.push(task.selfReference().update({
+                //       start: task.start?.clone().addDays(diff),
+                //       end: task.end?.clone().addDays(diff),
+                //     }));
+                //   }
+                // }
+                //
+                // batching = Promise.all(batch);
+                // batching.then(() => {
+                //   batching = null;
+                // });
               }
             }
           }
@@ -147,11 +175,16 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
                        {...drag()}
                        style={{
                          width: initialized ? `${(groupEndCol?.offsetLeft ?? 0) - (groupStartCol?.offsetLeft ?? 0) + 29}px` : '0',
+                         height: underGroup ? '8px' : undefined,
                          ...spring,
                        }}/>
         </AtomWrapper>
         {(!shared || !shared.collapsed) && <>
-          {tasks?.filter(task => !sharedState?.get(task.uid)?.hidden).map(
+          { subGroups?.map(group => <GroupAtom key={group.uid} group={group}
+                                               underGroup
+                                                  groupDatesChanged={groupDatesChanged}
+                                                  getDateColumn={getDateColumn}/>)}
+          {tasks?.filter(task => !atomsState?.get(task.uid)?.hidden).map(
               (task, index) => {
                 const Atom = task.type == TaskType.Task ? (
                     task.start && task.end ? TaskAtom : TaskAtomCreator

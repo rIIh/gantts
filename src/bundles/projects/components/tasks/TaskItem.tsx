@@ -1,4 +1,4 @@
-import React, { ChangeEvent, forwardRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { ChangeEvent, forwardRef, MouseEventHandler, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { LazyTask } from '../../types';
 import { LazyReference } from '../../../firebase/types';
 import { useCollectionReference, useReference } from '../../../firebase/hooks/useReference';
@@ -17,7 +17,7 @@ import { LazyUserInfo } from '../../../user/types';
 import { useSimpleCollection, useSimpleReference } from '../../../firebase/hooks/useSimpleReference';
 import { fractionByTruth, prettyNum } from '../utils';
 import { useModal } from '../../../common/modal/context';
-import {Colors, Palette} from "../../colors";
+import { adjust, Colors, Palette } from '../../colors';
 import {userReferences} from "../../../user/firebase";
 
 interface Props {
@@ -49,6 +49,7 @@ export const Marker = styled.div<{ state?: number }>`
 
 const Field = styled.div<{ filled?: number; color: Colors<Palette> }>`
 //#D8E5AE
+  transition: background-color 400ms;
   background-color: ${props => Palette[props.color].fill};
   border-radius: 4px;
   border: 1px solid ${props => Palette[props.color].border};
@@ -61,6 +62,10 @@ const Field = styled.div<{ filled?: number; color: Colors<Palette> }>`
   height: calc(100% - 8px);
   overflow: hidden;
   
+  &:hover {
+    background-color: ${props => adjust(Palette[props.color].border, 20)};
+  }
+  
   ::before {
     content: ' ';
     position: absolute;
@@ -70,6 +75,7 @@ const Field = styled.div<{ filled?: number; color: Colors<Palette> }>`
     background-color: ${props => Palette[props.color].border};
     width: ${props => props.filled}%;
     z-index: 10;
+    pointer-events: none;
     
     transition: width 200ms;
   }
@@ -123,10 +129,11 @@ interface ProgressProps {
   color?: Colors<Palette>;
   dates?: { start?: Date; end?: Date };
   onChange?: (newValue: number) => void;
+  inputRef?: React.RefObject<HTMLInputElement>;
   withoutInput?: boolean;
 }
 
-export const ProgressBar = forwardRef<HTMLInputElement, ProgressProps>(({ progress, dates, onChange, color, withoutInput }, ref) => {
+export const ProgressBar = forwardRef<HTMLDivElement, ProgressProps>(({ progress, dates, inputRef, onChange, color, withoutInput }, ref) => {
     const [state, setState] = useState(progress);
     useEffect(() => setState(progress), [progress]);
     
@@ -146,12 +153,12 @@ export const ProgressBar = forwardRef<HTMLInputElement, ProgressProps>(({ progre
       return clamp(offset / total * 100, 0, 100);
     }, [dates]);
     
-    return <Progress>
-      { dates && <Marker state={markerState}/> }
+    return <Progress ref={ref}>
+      { dates && dates.start && dates.end && <Marker state={markerState}/> }
        <Field filled={state} color={color ?? 'Pretty Pink'}>
          { !withoutInput && <>
         <Checkbox checked={state == 100} onChange={checked => { checked ? setState(100) : setState(0); onChange?.(checked ? 100 : 0); }}/>
-        <Input ref={ref} placeholder="0" value={prettyNum(state) + '%'} onChange={progressChange}/>
+        <Input ref={inputRef} placeholder="0" value={prettyNum(state) + '%'} onChange={progressChange}/>
         </>
          }
       </Field>

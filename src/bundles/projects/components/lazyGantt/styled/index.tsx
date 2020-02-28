@@ -150,6 +150,10 @@ export const ColorPill = styled.div<{ color: Colors<Palette> }>`
   border: 1px solid ${({ color }) => Palette[color].border};
   display: inline-flex;
   align-items: center;
+  
+  &:hover {
+    background-color: ${({ color }) => adjust(Palette[color].border, 20)};
+  }
 `;
 
 export const Group = styled.div`

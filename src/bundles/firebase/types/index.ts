@@ -15,6 +15,7 @@ export const CollectionReference = firebase.firestore.CollectionReference;
 export type CollectionReferencePath = string;
 export type Query = firebase.firestore.Query;
 export const FieldPath = firebase.firestore.FieldPath;
+export const FieldValue = firebase.firestore.FieldValue;
 
 export interface DocumentReferencePath {
   path: string;

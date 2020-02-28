@@ -17,10 +17,10 @@ interface LinkerProps {
 export const Linker: React.FC<LinkerProps> = ({ links, container }) => {
   const { atomElements } = useContext(CalendarContext);
   const { atomHeight } = useTheme<GanttTheme>();
-  const { sharedState } = useContext(LGanttContext)!;
+  const { atomsState } = useContext(LGanttContext)!;
   const [map, setMap] = useState(new Map<string, number>());
   
-  // useTraceUpdate({links, atomElements, sharedState});
+  // useTraceUpdate({links, atomElements, atomsState});
 
   useEffect(() => {
     const newMap = new Map<string, number>();

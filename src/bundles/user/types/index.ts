@@ -14,7 +14,7 @@ export interface ExtraUserInfo {
 
 export type User = firebase.User;
 export type UserInfo = firebase.UserInfo & ExtraUserInfo;
-export type LazyUserInfo = firebase.UserInfo & { company: LazyReference<Company>; invite?: string };
+export type LazyUserInfo = firebase.UserInfo & { company: LazyReference<Company>; invite?: string } & { [key: string]: any };
 
 export interface UserState {
   user: LazyUserInfo | null;

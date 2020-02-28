@@ -49,7 +49,7 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
   const testGroups = useTypedSelector(state => state.projectsState.groups.get(root.uid));
   const groupState = useTypedSelector(state => state.projectsState.calculatedProperties.get(root.uid));
   const history = useHistory();
-  const { sharedState } = useContext(LGanttContext)!;
+  const { atomsState, sharedState } = useContext(LGanttContext)!;
   const bind = useHover(({ hovering }) => setHovered(hovering));
   const [isHovered, setHovered] = useState(false);
   const [isCollapsed, setCollapsed] = useState(false);
@@ -127,7 +127,7 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
         <MetaColumn type="extra">
          <ExtraTools target={root} isParentHovered={isHovered}/>
           </MetaColumn>
-          <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 8px)` }}>
+          <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 18px)` }}>
             {<span>{title}</span>}
             <span className="project_manager__task_group_collapse">
         <span className={'fas ' + (isCollapsed ? 'fa-caret-right' : 'fa-caret-down')} onClick={() => setCollapsed(!isCollapsed)}/>
@@ -155,10 +155,12 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
         </div>
         { testGroups?.map(group => (
             <Fragment key={group.uid}>
-              <GroupAtom level={level + 1} group={group}/>
-              { !sharedState.get(group.uid)?.collapsed && !sharedState.get(group.uid)?.hidden && (
+              <GroupAtom level={level + 1} parentStack={[root.uid]} group={group}/>
+              { !atomsState.get(group.uid)?.collapsed && !atomsState.get(group.uid)?.hidden && (
                   <div className="gantt__meta_panel_toolbar"
-                       style={{ opacity: toolbar ? undefined : 0, pointerEvents: toolbar ? undefined : 'none' }}>
+                       data-toolbar-meta={group.uid}
+                       data-toolbar-path={group.selfReference().path}
+                       style={{ opacity: toolbar ? undefined : 0, pointerEvents: toolbar && sharedState.verticalDraggingSubjectUID != group.uid ? undefined : 'none' }}>
                     <MetaColumn type="extra"/>
                     <>
                       { creating === CreatingState.None || targetGroup?.uid != group.uid ? (

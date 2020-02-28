@@ -12,6 +12,7 @@ import {CollectionReference} from '../../firebase/types';
 import {ApplicationState} from '../../../redux/rootReducer';
 import {createInitialGroup} from './lib/createInitialGroup';
 import _ from 'lodash';
+import { LazyUserInfo } from '../../user/types';
 
 type RootDispatch = Dispatch<ActionType<typeof projectActions>>;
 
@@ -51,20 +52,42 @@ const recalculateProjectTree = (project: string) => {
     // throttledDispatch(projectActions.calculatedPropertiesUpdate({ key: project, value: { progress: projectProgress } }));
     
     const calculateDates = (group: LazyTaskGroup): [Date | undefined, Date | undefined] => {
-      const minimum = tasks?.get(group.uid)?.map(_task => _task.start).reduce((a, date) => {
+      const minimumInTasks = tasks?.get(group.uid)?.map(_task => _task.start).reduce((a, date) => {
         if (a && date && a.compareTo(date) < 0 || !date) {
           return a;
         } else {
           return date;
         }
       }, undefined);
-      const maximum = tasks?.get(group.uid)?.map(_task => _task.end).reduce((a, date) => {
+      const maximumInTasks = tasks?.get(group.uid)?.map(_task => _task.end).reduce((a, date) => {
         if (a && date && a.compareTo(date) > 0 || !date) {
           return a;
         } else {
           return date;
         }
       }, undefined);
+      const [minimumInGroups, maximumInGroups] = groups.get(group.uid)?.map(g => calculateDates(g)).reduce<[Date | undefined, Date | undefined]>((acc, [min, max]) => {
+        let res = [...acc];
+        if (min && res[0] && min.compareTo(res[0]) < 0 || !res[0]) {
+          res[0] = min;
+        }
+        if (max && res[1] && max.compareTo(res[1]) > 0 || !res[1]) {
+          res[1] = max;
+        }
+        return [res[0], res[1]];
+      }, [undefined, undefined]) ?? [];
+  
+      let minimum: Date | undefined;
+      let maximum: Date | undefined;
+      if (minimumInGroups) {
+        if (!minimumInTasks) { minimum = minimumInGroups; }
+        else { minimum = minimumInGroups.compareTo(minimumInTasks) < 0 ? minimumInGroups : minimumInTasks; }
+      } else { minimum = minimumInTasks; }
+      if (maximumInGroups) {
+        if (!maximumInTasks) { maximum = maximumInGroups; }
+        else { maximum = maximumInGroups.compareTo(maximumInTasks) > 0 ? maximumInGroups : maximumInTasks; }
+      } else { maximum = maximumInTasks; }
+      
       apply(group.uid, { start: minimum, end: maximum });
       // throttledDispatch(projectActions.calculatedPropertiesUpdate({ key: group.uid, value: { start: minimum, end: maximum } }));
       return [minimum, maximum];
@@ -112,12 +135,14 @@ export const attachToProject = (project: LazyProject) => {
               fetchTasks(group);
             });
           // @ts-ignore
-          recalculate(dispatch, project.uid);
+          if (groups.length > 0) {
+            recalculate(dispatch, project.uid);
+          }
         }),
       }));
     };
     fetchGroups(project);
-    CachedQueriesInstance.getManyOnce(project.taskGroups()).then(groups => {
+    CachedQueriesInstance.listenCollection(project.taskGroups(),groups => {
       createInitialGroup.cancel();
       if (groups.length == 0) {
         createInitialGroup(project);
@@ -134,7 +159,7 @@ export const createProject = (project: ProjectCreator, onCreated: (id: string) =
       }
       const currentUser = FirebaseAuth.currentUser;
       const projectDoc = projectReferences.projects.doc();
-      const user = await CachedQueriesInstance.getOnce(userReferences.users.doc(currentUser.uid));
+      const user = await CachedQueriesInstance.getOnce<LazyUserInfo & { roles: string[] }>(userReferences.users.doc(currentUser.uid));
       projectDoc.collection(projectCollections.enrolledCollection).withConverter(UserConverter).doc(currentUser.uid).set({ ...user, roles: ['owner'] });
       const lazyProject: LazyProject = {
         uid: projectDoc.id,

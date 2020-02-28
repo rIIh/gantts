@@ -1,9 +1,9 @@
 import { DateRange, LazyTask, TaskType } from '../../../types';
-import React, { forwardRef, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Atom, AtomDot, AtomHandle, AtomLabel, AtomWrapper, Milestone } from '../styled';
 import { useDrag, useGesture, useHover } from 'react-use-gesture';
-import { Overlay, Tooltip } from 'react-bootstrap';
+import { Overlay } from 'react-bootstrap';
 import Link, { LinkState } from './Link';
 import { useTheme } from '../../../../styled-components/hooks/useTheme';
 import { LGanttContext } from '../LazyGantt';
@@ -14,10 +14,9 @@ import { FullGestureState } from 'react-use-gesture/dist/types';
 import { CalendarContext } from '../LazyGanttCalendar';
 import { GanttTheme } from '../types';
 import { getDateColumnFromPoint } from '../helpers';
-import { LazyUserInfo } from '../../../../user/types';
-import { useSimpleCollection } from '../../../../firebase/hooks/useSimpleReference';
 import { WTooltip } from '../../../../bootstrap/WTooltip';
 import { diffDays } from '../../../../date/date';
+import { useTypedSelector } from '../../../../../redux/rootReducer';
 
 interface AtomProps {
   task: LazyTask;
@@ -62,7 +61,7 @@ const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateCo
   const atom = useForwardedRef(ref);
   const [selected, setSelected] = useState(false);
   const theme = useTheme<GanttTheme>();
-  const { findNode, sharedState } = useContext(LGanttContext)!;
+  const { atomsState, tasks } = useContext(LGanttContext)!;
   const { setAtomRef } = useContext(CalendarContext);
   
   useEffect(() => () => setAtomRef(task.uid, null), []);
@@ -93,10 +92,10 @@ const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateCo
     (async () => {
       if (task.end) {
         const taskEnd = task.end;
-        const promises = task.dependentOn?.().map(ref => ref.get());
-        for (let doc of promises ?? []) {
-          const dependency = (await doc).data() as LazyTask;
-          if ((dependency.start?.compareTo(taskEnd) ?? 0) <= 0 && dependency.start) {
+        const promises = task.dependentOn?.().map(ref => ref.id);
+        for (let docID of promises ?? []) {
+          const dependency = tasks.find(t => t.uid == docID);
+          if ((dependency?.start?.compareTo(taskEnd) ?? 0) <= 0 && dependency?.start) {
             const days = diffDays(dependency.start, taskEnd.clone());
             if (days >= 0) {
               dependency.selfReference().update({ start: dependency.start.clone().addDays(days + 1), end: dependency.end!.clone().addDays(days + 1) });
@@ -191,25 +190,24 @@ const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateCo
       });
       if (last && targetID ) {
         console.log(testAtomBelow, targetID);
-        findNode(targetID).then((target => {
-          let targetRef = target?.selfReference;
-          let taskRef = task.selfReference;
-          
-          if (taskRef && targetRef && !_.isEqual(taskRef, targetRef)) {
-            const isLeft = type == 'left';
-            const taskProp: keyof LazyTask = isLeft ? 'dependsOn' : 'dependentOn';
-            const targetProp: keyof LazyTask = isLeft ? 'dependentOn' : 'dependsOn';
-            if (target?.[taskProp]?.().some(dep => dep.id == task.uid)) {
-              alert('Circle reference not allowed');
-            }
-            else if (!task[taskProp]?.().find(t => t!.id == target?.uid) && !target?.[targetProp]?.().find(t => t!.id == task?.uid)) {
-              const taskPromise = taskRef().update(
-                  { [taskProp]: [...task?.[taskProp]?.().map(ref => ({ uid: ref.id, path: ref.path })) ?? [], new LazyReference(targetRef().path).toJson()] });
-              const targetPromise = targetRef().update(
-                  { [targetProp]: [...target?.[targetProp]?.().map(ref => ({ uid: ref.id, path: ref.path })) ?? [], new LazyReference(taskRef().path).toJson()] });
-            }
+        const target = tasks.find(t => t.uid == targetID);
+        let targetRef = target?.selfReference;
+        let taskRef = task.selfReference;
+        
+        if (taskRef && targetRef && !_.isEqual(taskRef, targetRef)) {
+          const isLeft = type == 'left';
+          const taskProp: keyof LazyTask = isLeft ? 'dependsOn' : 'dependentOn';
+          const targetProp: keyof LazyTask = isLeft ? 'dependentOn' : 'dependsOn';
+          if (target?.[taskProp]?.().some(dep => dep.id == task.uid)) {
+            alert('Circle reference not allowed');
           }
-        })).catch(console.warn);
+          else if (!task[taskProp]?.().find(t => t!.id == target?.uid) && !target?.[targetProp]?.().find(t => t!.id == task?.uid)) {
+            const taskPromise = taskRef().update(
+                { [taskProp]: [...task?.[taskProp]?.().map(ref => ({ uid: ref.id, path: ref.path })) ?? [], new LazyReference(targetRef().path).toJson()] });
+            const targetPromise = targetRef().update(
+                { [targetProp]: [...target?.[targetProp]?.().map(ref => ({ uid: ref.id, path: ref.path })) ?? [], new LazyReference(taskRef().path).toJson()] });
+          }
+        }
       }
     } else {
       let container = wrapper.current!.parentElement!.parentElement!;
@@ -263,8 +261,10 @@ const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateCo
       <AtomElement
           ref={atom}
           color={task.color}
-          filled={task.progress ?? sharedState.get(task.uid)?.progress ?? 0}
+          filled={task.progress ?? atomsState.get(task.uid)?.progress ?? 0}
           data-atom_uid={task.uid}
+          data-task-uid={task.uid}
+          data-milestone={task.type == TaskType.Milestone ? '' : undefined}
           className="calendar_task_atom on_calendar"
           isDragging={dragState != null || handleState != null || parentOffset != 0}
           style={{

@@ -18,6 +18,7 @@ import projectActions from './bundles/projects/redux/actions';
 import { composeWithDevTools } from 'redux-devtools-extension';
 import { initUser } from './bundles/user/redux/thunks';
 import registerDev from './serviceWorkerDev';
+import { CachedQueriesInstance } from './bundles/firebase/cache';
 
 const history = createBrowserHistory();
 

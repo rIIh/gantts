@@ -27,7 +27,12 @@
     padding: 0 4px;
     cursor: pointer;
   }
-
+  &__task_group_move {
+    position: absolute;
+    transform: translateX(calc(-200% + 2px));
+    padding: 0 4px;
+    cursor: pointer;
+  }
   &__task {
     margin-left: 2rem;
   }

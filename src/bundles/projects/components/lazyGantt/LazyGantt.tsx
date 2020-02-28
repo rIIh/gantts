@@ -7,31 +7,40 @@ import { GanttTheme, PropsWithConfig } from './types';
 import { Map } from 'immutable';
 import { AssignedFilter, DatesFilter, FilterHeader } from './FilterHeader';
 import { Colors, Palette } from '../../colors';
+import { Filters } from '../../types/filter';
+import { CachedQueriesInstance } from '../../../firebase/cache';
+import { FieldPath } from '../../../firebase/types';
+import { useTypedSelector } from '../../../../redux/rootReducer';
 
 export interface Meta {
   [key: string]: any;
 }
 
+interface SharedState {
+  verticalDraggingSubjectUID?: string;
+}
+
 interface LazyGanttContextType {
   project: LazyProject;
-  findNode: (id: string) => Promise<LazyTask | null>;
-  filters: { assignedFilter: AssignedFilter | null; dateFilter: DatesFilter;
-  hideCompleted: boolean; colorsFilter: Colors<Palette>[]; };
-  sharedState: Map<string, Meta>;
-  writeSharedState: (id: string, meta: Meta) => void;
+  sharedState: SharedState;
+  findNode: (id: string) => Promise<LazyTask | LazyTaskGroup | LazyProject | null>;
+  tasks: LazyTask[];
+  groups: LazyTaskGroup[];
+  filters: Filters;
+  atomsState: Map<string, Meta>;
+  writeAtomsState: (id: string, meta: Meta) => void;
+  writeSharedState: (data: Partial<SharedState>) => void;
 }
 
 export const LGanttContext = createContext<LazyGanttContextType | null>(null);
-const findNode = async (group: LazyTaskGroup, id: string): Promise<LazyTask | null> => {
-  const result = (await group.tasks().get()).docs.map(doc => doc.data() as LazyTask).find(task => task.uid == id);
-  console.log(group.tasks);
-  if (result) {
-    console.log('node found');
-    return result;
+const findNode = async (group: LazyTaskGroup, id: string): Promise<LazyTask | LazyTaskGroup | null> => {
+  if (group.uid == id) { return group; }
+  const result = (await CachedQueriesInstance.getManyOnce<LazyTask>(group.tasks().where(FieldPath.documentId(), '==', id)));
+  if (result && result.length > 0) {
+    return result[0];
   } else {
-    console.log('searching in children', group.taskGroups);
-    return (await group.taskGroups().get()).docs.map(doc => doc.data() as LazyTaskGroup)
-        .reduce<Promise<LazyTask | null> | null>(async (acc, group) => {
+    return (await CachedQueriesInstance.getManyOnce<LazyTaskGroup>(group.taskGroups()))
+        .reduce<Promise<LazyTask | LazyTaskGroup | null> | null>(async (acc, group) => {
           if (acc) {
             return acc;
           } else {
@@ -46,18 +55,16 @@ export const LazyGantt: React.FC<LGanttProps & PropsWithConfig> = ({
   project,
   ...props
 }) => {
+  const [sharedState, setSharedState] = useState({});
   const [sharedMeta, setSharedMeta] = useState(Map<string, Meta>());
-  const [assignedFilter, setAssignedFilter] = useState<AssignedFilter | null>(null);
-  const [dateFilter, setDateFilter] = useState<DatesFilter>(DatesFilter.All);
-  const [completedFilter, setCompletedFilter] = useState(false);
-  const [colorsFilter, setColorsFilter] = useState<Colors<Palette>[]>([]);
-  const onAssignedFilter = useCallback((filter: AssignedFilter) => {
-    if (filter.include.length > 0) {
-      setAssignedFilter(filter);
-    } else {
-      setAssignedFilter(null);
-    }
-  }, [setAssignedFilter]);
+  const tasksInStore = useTypedSelector(state => state.projectsState.tasks.filter(value => value && value.length > 0 && value[0].project().id == project.uid || true));
+  const groups = useTypedSelector(state => state.projectsState.groups.filter(value => value && value.length > 0 && value[0].projectID == project.uid || true));
+  const [filters, setFilters] = useState<Filters>({
+    dateFilter: DatesFilter.All,
+    usersFilter: { include: [] },
+    colorsFilter: [],
+    hideCompleted: false,
+  });
 
   const hiddenCount = useMemo(() => {
     let hiddenCount = 0;
@@ -71,11 +78,17 @@ export const LazyGantt: React.FC<LGanttProps & PropsWithConfig> = ({
   
   return <LGanttContext.Provider value={{
     project: project,
-    sharedState: sharedMeta,
-    filters: { assignedFilter, dateFilter, hideCompleted: completedFilter, colorsFilter },
-    writeSharedState: (id, meta) => setSharedMeta(last => last.update(id, last => ({ ...last, ...meta }))),
+    atomsState: sharedMeta,
+    sharedState,
+    filters,
+    tasks: [...tasksInStore.values()].flat(1),
+    groups: [...groups.values()].flat(1),
+    writeSharedState: (data: Partial<SharedState>) => setSharedState(last => ({ ...last, ...data })),
+    writeAtomsState: (id, meta) => setSharedMeta(last => last.update(id, last => ({ ...last, ...meta }))),
     findNode: async (id) => {
-      for (let group of (await project.taskGroups().get()).docs.map(doc => doc.data() as LazyTaskGroup)) {
+      if (project.uid == id) { return project; }
+      for (let group of (await CachedQueriesInstance.getManyOnce<LazyTaskGroup>(project.taskGroups()))) {
+        if (group.uid == id) { return group; }
         const result = await findNode(group, id);
         if (result) {
           return result;
@@ -84,7 +97,11 @@ export const LazyGantt: React.FC<LGanttProps & PropsWithConfig> = ({
       return null;
     },
   }}>
-      <FilterHeader project={project} hiddenCount={hiddenCount} onAssignedFilter={onAssignedFilter} onColorsFilter={setColorsFilter} onCompletedFilter={setCompletedFilter} onDateFilter={setDateFilter}/>
+      <FilterHeader project={project} initial={filters} hiddenCount={hiddenCount}
+                    onAssignedFilter={filter => setFilters(l => ({ ...l, usersFilter: filter }))}
+                    onDateFilter={filter => setFilters(l => ({ ...l, dateFilter: filter }))}
+                    onColorsFilter={filter => setFilters(l => ({ ...l, colorsFilter: filter }))}
+                    onCompletedFilter={filter => setFilters(l => ({ ...l, hideCompleted: filter }))}/>
       <div className="gantt">
         <LazyGanttMetaPanel project={project}/>
         <LazyGanttCalendar project={project}/>

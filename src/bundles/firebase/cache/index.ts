@@ -8,10 +8,11 @@ interface QueryState<T> {
 type Disposer = () => void;
 
 class FirestoreCache {
-  cachedCollectionQueries: Map<CollectionReference | Query, QueryState<Map<string, any>>> = new Map<CollectionReference, QueryState<Map<string, any>>>();
-  cachedDocumentQueries: Map<DocumentReference, QueryState<any>> = new Map<DocumentReference, QueryState<any>>();
+  cachedCollectionQueries: Map<CollectionReference | Query, QueryState<Map<string, any>>> = new Map();
+  cachedDocumentQueries: Map<DocumentReference, QueryState<any>> = new Map();
+  disposers: Disposer[] = [];
   
-  getOnce(reference: DocumentReference): Promise<any> {
+  getOnce<T>(reference: DocumentReference): Promise<T> {
     return new Promise<any>(resolve => {
       const dispose = this.listenDocument(reference, data => {
         resolve(data);
@@ -20,7 +21,7 @@ class FirestoreCache {
     });
   }
   
-  getManyOnce(reference: CollectionReference): Promise<any> {
+  getManyOnce<T>(reference: CollectionReference | Query): Promise<T[]> {
     return new Promise<any>(resolve => {
       const dispose = this.listenCollection(reference, data => {
         resolve(data);
@@ -31,6 +32,7 @@ class FirestoreCache {
   
   listenCollection(reference: CollectionReference | Query, callback: (data: any) => void, onFailed?: (error: Error) => void): Disposer {
     let state = this.cachedCollectionQueries.get(reference);
+    let firestoreDisposer: Disposer | null = null;
     if (state) {
       state.listeners.push(callback);
       callback([...state.value?.values() ?? []]);
@@ -41,7 +43,7 @@ class FirestoreCache {
       };
       this.cachedCollectionQueries.set(reference, state);
       state.value = new Map();
-      reference.onSnapshot(snapshot => {
+      firestoreDisposer = reference.onSnapshot(snapshot => {
         const changes = snapshot.docChanges();
         if (snapshot.empty) {
           state!.listeners.forEach(listener => listener([]));
@@ -67,31 +69,46 @@ class FirestoreCache {
         } catch (e) {
           onFailed?.(e);
         }
-      });
+      }, error => console.error('Firestore: Document read failed with error', error.message, reference));
     }
-    return () => this.unsubscribe(reference, callback);
+    const disposer = () => {
+      this.unsubscribe(reference, callback);
+      firestoreDisposer?.();
+    };
+    this.disposers.push(disposer);
+    return disposer;
   }
   
   listenDocument(reference: DocumentReference, callback: (data: any) => void): Disposer {
     let state = this.cachedDocumentQueries.get(reference);
+    let firestoreDisposer: Disposer | null = null;
     if (state) {
       state.listeners.push(callback);
       callback(state.value);
-
     } else {
       state = {
         value: null,
         listeners: [callback],
       };
       this.cachedDocumentQueries.set(reference, state);
-      reference.onSnapshot(snapshot => {
+      firestoreDisposer = reference.onSnapshot(snapshot => {
         if (state) {
           state.value = snapshot.data() ?? null;
         }
         state!.listeners.forEach(listener => listener(state?.value));
-      });
+      }, error => console.error('Firestore: Document read failed with error', error.message, reference.path));
     }
-    return () => this.unsubscribeSingle(reference, callback);
+    const disposer = () => {
+      this.unsubscribeSingle(reference, callback);
+      firestoreDisposer?.();
+    };
+    this.disposers.push(disposer);
+    return disposer;
+  }
+  
+  clear() {
+    this.disposers.forEach(d => d());
+    this.disposers = [];
   }
   
   unsubscribeSingle(reference: DocumentReference, callback: (data: any) => void) {
