@@ -11,7 +11,6 @@ const BottomBar = styled.div`
   position: absolute;
   width: 100%;
   bottom: 0;
-  background-color: rebeccapurple;
 `;
 
 const Row = styled.div`
@@ -29,6 +28,7 @@ const FlexRow = styled(Row)`
 
 const Title = styled.div`
   width: ${props => Object.values(props.theme.meta_columns).reduce(_.add)}px;
+  color: #767676;
   text-align: end;
 `;
 
@@ -88,7 +88,7 @@ const Mark = styled.div.attrs<{ value?: number }>(({ value = 0 }) => {
   return ({
     children: value,
     style: {
-      color: value != 0 ? 'black' : 'lightgrey',
+      color: value != 0 ? '#767676' : 'lightgrey',
       backgroundColor: background,
     } as CSSProperties,
   });
