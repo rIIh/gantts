@@ -49,7 +49,7 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
   const testGroups = useTypedSelector(state => state.projectsState.groups.get(root.uid));
   const groupState = useTypedSelector(state => state.projectsState.calculatedProperties.get(root.uid));
   const history = useHistory();
-  const { atomsState, sharedState } = useContext(LGanttContext)!;
+  const { atomsState, sharedState, tasks, groups } = useContext(LGanttContext)!;
   const bind = useHover(({ hovering }) => setHovered(hovering));
   const [isHovered, setHovered] = useState(false);
   const [isCollapsed, setCollapsed] = useState(false);
@@ -63,7 +63,7 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
     setTarget(target);
   };
   
-  const submitForm = useCallback(() => {
+  const submitForm = useCallback(async () => {
     if (!formTitle || formTitle.length == 0 || !targetGroup) {
       return;
     }
@@ -71,6 +71,7 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
       case CreatingState.Milestone:
       case CreatingState.Task: {
         const doc = targetGroup.tasks().withConverter(TaskConverter).doc();
+        await tasks.filter(task => task.parentGroup().id == targetGroup.uid).find(task => task.next == undefined)?.selfReference().update({ next: doc.id });
         doc.set({
           uid: doc.id,
           type: creating == CreatingState.Task ? TaskType.Task : TaskType.Milestone,
