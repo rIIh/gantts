@@ -6,6 +6,7 @@ import { WeekBitMask } from '../../types';
 import { LGanttContext } from './LazyGantt';
 import { useSimpleCollection } from '../../../firebase/hooks/useSimpleReference';
 import { LazyUserInfo } from '../../../user/types';
+import { scrollbarWidth } from '../../../common/lib/scrollbarWidth';
 
 const BottomBar = styled.div`
   position: absolute;
@@ -54,9 +55,10 @@ const StyledBottomBarCalendar = styled.div`
   position: absolute;
   width: 100%;
   bottom: 0;
+  z-index: 200;
   background-color: white;
   border-top: 1px solid ${props => props.theme.colors.lightgrey};
-  padding-bottom: ${props => props.theme.atomHeight - 15}px;
+  padding-bottom: ${props => props.theme.atomHeight - scrollbarWidth}px;
 `;
 
 const MetaRow = styled(Row)`
@@ -111,11 +113,11 @@ export const BottomBarCalendar: React.FC<{dates: Map<Date, HTMLDivElement>; mask
   return <StyledBottomBarCalendar>
     { enrolledUsers.map(user => (
         <FlexRow key={user.uid}>{ [...dates.keys()].map(date => {
-          return <Mark value={tasks.filter(task => task.assignedUsers.some(id => user.uid == id) && task.start && task.end && date.between(task.start, task.end)).length} key={date.getTime()}/>;
+          return <Mark value={tasks.filter(task => task.assignedUsers.some(id => user.uid == id) && task.start && task.end && (date.between(task.start, task.end) || date.isToday(task.end))).length} key={date.getTime()}/>;
         })}</FlexRow>
     )) }
     <FlexRow id="unassigned-bottom-row">{ [...dates.keys()].map(date => {
-      return <Mark key={date.getTime()} value={tasks.filter(task => task.assignedUsers.length == 0 && task.start && task.end && date.between(task.start, task.end)).length}/>;
+      return <Mark key={date.getTime()} value={tasks.filter(task => task.assignedUsers.length == 0 && task.start && task.end && (date.between(task.start, task.end) || date.isToday(task.end))).length}/>;
     })}</FlexRow>
   </StyledBottomBarCalendar>;
 };

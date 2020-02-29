@@ -35,6 +35,7 @@ FirebaseAuth.onAuthStateChanged(user => {
   store.dispatch(projectActions.clear());
 });
 
+
 ReactDOM.render(<Main history={history} store={store}/>, document.getElementById('root'));
 
 // If you want your app to work offline and load faster, you can change

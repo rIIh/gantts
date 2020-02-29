@@ -110,7 +110,6 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
       }
     }
     if (!_.isEqual(newLinks, links)) {
-      console.log('Tasks was changed');
       setLinks(newLinks);
       promise = null;
     }
@@ -129,7 +128,6 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
   
   useEffect(() => {
     if (weekMask == WeekBitMask.All) {
-      console.log(weekMask, WeekBitMask.All);
       setLastDayInWeek(-1);
     } else {
       let _lastDayInWeek = WeekBitMask.Sunday;
@@ -148,7 +146,6 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
   }, [weekMask]);
   
   const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    console.log('Scrolling Calendar', event.currentTarget.scrollLeft + size.width + 200 > event.currentTarget.scrollWidth);
     if (event.currentTarget.scrollLeft + size.width + 200 > event.currentTarget.scrollWidth) {
       setEndMonth(prev => prev.clone().addMonths(1));
     }
