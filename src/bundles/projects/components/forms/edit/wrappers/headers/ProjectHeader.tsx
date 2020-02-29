@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { LazyProject, LazyTaskGroup } from '../../../../../types';
 import { useTypedSelector } from '../../../../../../../redux/rootReducer';
-import { ModelBody } from '../../ModelBody';
+import { FormBody } from '../../FormBody';
 import { ModelHeader } from '../../ModelHeader';
 import { useSimpleReference } from '../../../../../../firebase/hooks/useSimpleReference';
 import { useDebounce } from '../../../../../../common/hooks/lodashHooks';

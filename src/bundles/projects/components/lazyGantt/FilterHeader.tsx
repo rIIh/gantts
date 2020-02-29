@@ -102,9 +102,11 @@ export const FilterHeader: React.FC<Props> = ({ project, initial, hiddenCount, o
   
   const [dateFilter, setDateFilter] = useState<DatesFilter>(initial.dateFilter);
   useEffect(() => onDateFilter?.(dateFilter), [dateFilter]);
+  useEffect(() => { dateFilter != initial.dateFilter && setDateFilter(initial.dateFilter); }, [initial.dateFilter]);
 
   const [completedFilter, setCompletedFilter] = useState(initial.hideCompleted);
   useEffect(() => onCompletedFilter?.(completedFilter), [completedFilter]);
+  useEffect(() => { completedFilter != initial.hideCompleted && setCompletedFilter(initial.hideCompleted); }, [initial.hideCompleted]);
 
   const [colorsFilter, setColorsFilter] = useState<Set<Colors<Palette>>>(Set(initial.colorsFilter));
   useEffect(() => onColorsFilter?.(colorsFilter.toArray()), [colorsFilter]);
@@ -176,7 +178,7 @@ export const FilterHeader: React.FC<Props> = ({ project, initial, hiddenCount, o
     { onColorsFilter && (
         <Form.Group className="my-0">
           <Checkbox type="checkbox" label="Hide completed"
-                    value={completedFilter}
+                    checked={completedFilter}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCompletedFilter(e.target.checked)}/>
         </Form.Group>
     )}

@@ -126,7 +126,7 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
             className={'gantt__atom_meta gantt__atom_meta--group' + (isHovered ? ' gantt__atom_meta--active' : '')}
             {...bind()}>
         <MetaColumn type="extra">
-         <ExtraTools target={root} isParentHovered={isHovered}/>
+         <ExtraTools target={root} isParentHovered={isHovered} projectID={root.uid}/>
           </MetaColumn>
           <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 18px)` }}>
             {<span>{title}</span>}

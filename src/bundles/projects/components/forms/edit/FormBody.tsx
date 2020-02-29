@@ -21,7 +21,7 @@ interface Props {
   model: BodyModel;
   storagePath: string;
   onModelChanged: (newValue: BodyModel) => void;
-  sidebar: React.FC;
+  sidebar?: React.FC;
 }
 
 export const uploadFile = async (storage: firebase.storage.Reference, file: File): Promise<firebase.storage.Reference> => {
@@ -92,7 +92,7 @@ const NoteWindow = styled.div<{ editing?: boolean }>`
   }
 `;
 
-export const ModelBody: React.FC<Props> = ({ model, storagePath, onModelChanged, sidebar: Sidebar }) => {
+export const Discussion: React.FC<Props> = ({ model, storagePath, onModelChanged }) => {
   const [state, setState] = useState({ ...model });
   const { user } = useTypedSelector(state => state.userState);
   const [editComment, setEditComment] = useState<string | null>(null);
@@ -156,104 +156,107 @@ export const ModelBody: React.FC<Props> = ({ model, storagePath, onModelChanged,
   const [editingNote, setEditingNote] = useState(false);
   const [note, setNote] = useState(model.note);
   useEffect(() => setNote(model.note), [model.note]);
-  
-  return <Main>
-    <MainBody>
-      <DiscussionDetail>
-        <h2 className="section-header">Notes</h2>
-        <NoteWindow editing={editingNote} className="editable-text section-body full is-empty-prompt">
-          { !editingNote ? <p onClick={() => setEditingNote(true)}>{ model.note.length > 0 ? model.note : 'Pin a note to this project' }</p> : (
-              <TextareaAutosize style={{ width: '100%', background: 'transparent', resize: 'none' }} value={note} autoFocus onChange={e => setNote(e.currentTarget.value)} onBlur={() => {
-                model.selfReference().update({ note });
-                setEditingNote(false);
-              }}/>
-          )}
-        </NoteWindow>
-        <h2 className="section-header">Comments</h2>
-        <section className="target-discussions section-body">
-          <ul className="comment-list">
-            {model.comments.map((comment) => (
-                <Comment className="task-comment" key={comment.uid}>
-                  <UserPic userID={comment.creator} size={48}/>
-                  <div style={{ width: '100%', marginLeft: '1rem' }}>
-                    <CommentHeader userID={comment.creator} updatedDate={comment.updatedAt}
-                                   onDelete={() => deleteComment(comment.uid)}
-                                   onEdit={() => setEditComment(last => last != comment.uid ? comment.uid : null)}/>
-                    { editComment == comment.uid ? <CommentsSection docUploaded={uploadDoc} initialValue={comment.content}
-                                                                    storage={FireStorage.ref(storagePath)}
-                                                                    onSubmit={(content) => updateComment({
-                                                                      ...comment,
-                                                                      content,
-                                                                      updatedAt: new Date(),
-                                                                    })}/>
-                        :
-                        <ReactMarkdown source={comment.content}/> }
-                        <div style={{ height: '2rem' }}/>
-                    { comment.documents?.map(doc => model.documents.find(_doc => _doc.uid == doc))
-                        .filter((doc): doc is RemoteDocument => doc != null)
-                        .map(doc => (
+  return <DiscussionDetail>
+    <h2 className="section-header">Notes</h2>
+    <NoteWindow editing={editingNote} className="editable-text section-body full is-empty-prompt">
+      { !editingNote ? <p onClick={() => setEditingNote(true)}>{ model.note.length > 0 ? model.note : 'Pin a note to this project' }</p> : (
+          <TextareaAutosize style={{ width: '100%', background: 'transparent', resize: 'none' }} value={note} autoFocus onChange={e => setNote(e.currentTarget.value)} onBlur={() => {
+            model.selfReference().update({ note });
+            setEditingNote(false);
+          }}/>
+      )}
+    </NoteWindow>
+    <h2 className="section-header">Comments</h2>
+    <section className="target-discussions section-body">
+      <ul className="comment-list">
+        {model.comments.map((comment) => (
+            <Comment className="task-comment" key={comment.uid}>
+              <UserPic userID={comment.creator} size={48}/>
+              <div style={{ width: '100%', marginLeft: '1rem' }}>
+                <CommentHeader userID={comment.creator} updatedDate={comment.updatedAt}
+                               onDelete={() => deleteComment(comment.uid)}
+                               onEdit={() => setEditComment(last => last != comment.uid ? comment.uid : null)}/>
+                { editComment == comment.uid ? <CommentsSection docUploaded={uploadDoc} initialValue={comment.content}
+                                                                storage={FireStorage.ref(storagePath)}
+                                                                onSubmit={(content) => updateComment({
+                                                                  ...comment,
+                                                                  content,
+                                                                  updatedAt: new Date(),
+                                                                })}/>
+                    :
+                    <ReactMarkdown source={comment.content}/> }
+                <div style={{ height: '2rem' }}/>
+                { comment.documents?.map(doc => model.documents.find(_doc => _doc.uid == doc))
+                    .filter((doc): doc is RemoteDocument => doc != null)
+                    .map(doc => (
                         <DocumentAttachment key={doc.uid} document={doc} onDescription={description => updateDocument({ ...doc, description })}/>
                     ))}
-                  </div>
-                </Comment>
-            ))}
-          </ul>
-          <CommentsSection docUploaded={uploadDoc} storage={FireStorage.ref(storagePath)} uploads onSubmit={(content, documents) => setState(l => ({
-            ...l,
-            comments: [...l.comments, {
-              uid: cuid(),
-              content,
-              documents,
-              creator: user!.uid,
-              updatedAt: new Date(),
-            }],
-          }))}/>
-        </section>
-        <h2 className="section-header">Documents</h2>
-        <Documents className="documents section-body">
-          { model.documents.sort((l, r) => -l.updatedAt.compareTo(r.updatedAt)).map(doc => (
-              <Doc key={doc.uid}>
-                <div className="thumbnail">
-                  <a href={doc.downloadURL} target="_blank">
-                    <img src={doc.downloadURL} alt={doc.title}/>
-                  </a>
-                </div>
-                <div className="info">
-                  <a href={doc.downloadURL}><strong>{ doc.title }</strong></a>
-                  <p>{ doc.description }</p>
-                  <span className="document-meta">
+              </div>
+            </Comment>
+        ))}
+      </ul>
+      <CommentsSection docUploaded={uploadDoc} storage={FireStorage.ref(storagePath)} uploads onSubmit={(content, documents) => setState(l => ({
+        ...l,
+        comments: [...l.comments, {
+          uid: cuid(),
+          content,
+          documents,
+          creator: user!.uid,
+          updatedAt: new Date(),
+        }],
+      }))}/>
+    </section>
+    <h2 className="section-header">Documents</h2>
+    <Documents className="documents section-body">
+      { model.documents.sort((l, r) => -l.updatedAt.compareTo(r.updatedAt)).map(doc => (
+          <Doc key={doc.uid}>
+            <div className="thumbnail">
+              <a href={doc.downloadURL} target="_blank">
+                <img src={doc.downloadURL} alt={doc.title}/>
+              </a>
+            </div>
+            <div className="info">
+              <a href={doc.downloadURL}><strong>{ doc.title }</strong></a>
+              <p>{ doc.description }</p>
+              <span className="document-meta">
                     by {doc.author}, {doc.updatedAt.toString('dd/MM/yy')}
                   </span>
-                </div>
-              </Doc>
-          ))}
-          <DocDropStyled>
-            <i className="tg-icon file-add muted"/>To add a document, drop files here, or
-            <button className="browse-button" onClick={() => { filesRef.current?.click(); }}>browse.</button>
-            <input ref={filesRef} type="file" onChange={async e => {
-              const files = e.currentTarget.files;
-              e.currentTarget.files = null;
-              for (let i = 0; i < (files?.length ?? 0); i++) {
-                const file = files?.item(i);
-                if (file) {
-                  const ref = await uploadFile(FireStorage.ref(storagePath), file);
-                  const doc: RemoteDocument = {
-                    uid: cuid(),
-                    title: file.name,
-                    updatedAt: new Date(),
-                    description: '',
-                    author: user!.uid,
-                    refPath: ref.fullPath,
-                    downloadURL: await ref.getDownloadURL(),
-                    versions: [],
-                  };
-                  await uploadDoc(doc);
-                }
-              }
-            }} multiple style={{ display: 'none' }}/>
-          </DocDropStyled>
-        </Documents>
-      </DiscussionDetail>
+            </div>
+          </Doc>
+      ))}
+      <DocDropStyled>
+        <i className="tg-icon file-add muted"/>To add a document, drop files here, or
+        <button className="browse-button" onClick={() => { filesRef.current?.click(); }}>browse.</button>
+        <input ref={filesRef} type="file" onChange={async e => {
+          const files = e.currentTarget.files;
+          e.currentTarget.files = null;
+          for (let i = 0; i < (files?.length ?? 0); i++) {
+            const file = files?.item(i);
+            if (file) {
+              const ref = await uploadFile(FireStorage.ref(storagePath), file);
+              const doc: RemoteDocument = {
+                uid: cuid(),
+                title: file.name,
+                updatedAt: new Date(),
+                description: '',
+                author: user!.uid,
+                refPath: ref.fullPath,
+                downloadURL: await ref.getDownloadURL(),
+                versions: [],
+              };
+              await uploadDoc(doc);
+            }
+          }
+        }} multiple style={{ display: 'none' }}/>
+      </DocDropStyled>
+    </Documents>
+  </DiscussionDetail>;
+};
+
+export const FormBody: React.FC<Props> = ({ model, storagePath, onModelChanged, sidebar: Sidebar }) => {
+  return <Main>
+    <MainBody>
+      <Discussion model={model} storagePath={storagePath} onModelChanged={onModelChanged}/>
       {/*<h2 className="section-header">History</h2>
       <section className="section-body">
         <ul className="history-list">
@@ -268,7 +271,7 @@ export const ModelBody: React.FC<Props> = ({ model, storagePath, onModelChanged,
       </section>*/}
     </MainBody>
     <MainSidebar>
-      <Sidebar/>
+      { Sidebar && <Sidebar/>}
     </MainSidebar>
   </Main>;
 };

@@ -13,7 +13,7 @@ const EnrolledTo: React.FC = () => {
   const projectDocs = useMemo(() => _.compact(enrolledTo?.docs.map(doc => doc.ref.parent.parent?.withConverter(ProjectConverter))), [enrolledTo]);
 
   console.log(user);
-  return <Container className="py-5 page__container flex-grow-1" fluid>
+  return <Container className="py-5 page__container flex-grow-1" fluid style={{ overflow: 'auto' }}>
     <div>
       <span style={{ marginRight: '1rem' }}/>
       { projectDocs.map(doc => <ProjectList key={doc.id} doc={doc}/> )}

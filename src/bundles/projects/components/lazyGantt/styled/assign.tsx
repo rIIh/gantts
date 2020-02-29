@@ -29,4 +29,8 @@ export const Assigned = styled.p`
   &:not(:last-child)::after {
     content: ', ';
   }
+  
+  &:last-child {
+    padding-right: 6px;
+  }
 `;

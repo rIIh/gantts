@@ -73,12 +73,15 @@ export interface AssignModalProps {
 export const AssignModal: React.FC<AssignModalProps> = ({ task, initialValue, onHide }) => {
   const [selected, setSelected] = useState<LazyUserInfo[]>(initialValue ?? []);
   const [project] = useSimpleReference<LazyProject>(task.project());
+  const dispatch = useDispatch();
   const { showModal } = useModal(project && <InviteModal project={project}/>);
   
   useEffect(() => setSelected(initialValue ?? []), [initialValue]);
   
   const onSubmit = useCallback(async (selected: LazyUserInfo[]) => {
+    dispatch(appActions.setBusy({ isBusy: true }));
     await task.selfReference().update({ assignedUsers: selected.map(s => s.uid) });
+    dispatch(appActions.setBusy({ isBusy: false }));
     onHide?.();
   }, []);
   

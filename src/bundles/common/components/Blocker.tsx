@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import styled from 'styled-components';
 
 const RelativeContainer = styled.div`
@@ -10,6 +10,7 @@ const Backdrop = styled.div.attrs<{ show: boolean }>(props => ({ style: {
   pointerEvents: props.show ? null : 'none',
 } }))<{ show: boolean }>`
   position: absolute;
+  z-index: 20000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -19,8 +20,8 @@ const Backdrop = styled.div.attrs<{ show: boolean }>(props => ({ style: {
   bottom: 0;
 `;
 
-export const Blocker: React.FC<{ show: boolean; backdrop?: JSX.Element }> = ({ show, children, backdrop }) => {
-  return <RelativeContainer>
+export const Blocker: React.FC<{ show: boolean; backdrop?: JSX.Element; style?: CSSProperties }> = ({ show, children, backdrop, style }) => {
+  return <RelativeContainer style={style}>
     { children }
     <Backdrop show={show}>
       { show && backdrop }

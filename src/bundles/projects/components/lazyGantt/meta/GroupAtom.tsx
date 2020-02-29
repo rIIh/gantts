@@ -1,4 +1,4 @@
-import React, { CSSProperties, useContext, useEffect, useRef, useState } from 'react';
+import React, { CSSProperties, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { LazyProject, LazyTask, LazyTaskGroup } from '../../../types';
 import { MetaColumn } from '../styled/meta';
 import { useDrag, useHover } from 'react-use-gesture';
@@ -75,6 +75,7 @@ export const moveGroup = async (from: string, to: string, batch: firebase.firest
   for (let t of tasks) {
     await moveTask(t.selfReference().path, currentClone.tasks().doc(t.uid).path, batch, false);
   }
+  
   if (initial) {
     await batch.commit();
   }
@@ -89,7 +90,7 @@ export const GroupAtom: React.FC<Props> = ({ group, level, parentStack }) => {
   const hovered = useHover(({ hovering }) => setHovered(hovering));
   const [subGroups] = useSimpleCollection<LazyTaskGroup>(group.taskGroups());
   const [groupTasks] = useSimpleCollection<LazyTask>(group.tasks());
-  
+  const sortedTasks = useMemo(() => [...groupTasks].sort(linkedSorter(el => el.uid)), [groupTasks]);
   const { showModal } = useModal(<GroupForm group={group}/>, { size: 'xl', animation: false });
   
   let lastElement = useRef<{ element: HTMLElement; lastState: { [key: string]: string }; activeSide: -1 | 0 | 1; isToolbar: boolean; isTask: boolean }>(null);
@@ -234,7 +235,7 @@ export const GroupAtom: React.FC<Props> = ({ group, level, parentStack }) => {
             {...hovered()}
         >
           <MetaColumn type="extra">
-            <ExtraTools target={group} isParentHovered={isHovered}/>
+            <ExtraTools target={group} isParentHovered={isHovered} projectID={parentStack[0]}/>
           </MetaColumn>
           <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 18px)` }}>
             {<span>{title}</span>}
@@ -269,7 +270,7 @@ export const GroupAtom: React.FC<Props> = ({ group, level, parentStack }) => {
         </div>
         { !meta?.collapsed && (
             <>
-              { groupTasks?.sort(linkedSorter(el => el.uid)).map(task => <TaskAtom key={task.uid} task={task} parentStack={[...parentStack, group.uid]} level={level + 1}/>)}
+              { sortedTasks.map(task => <TaskAtom key={task.uid} task={task} parentStack={[...parentStack, group.uid]} level={level + 1}/>)}
               { subGroups?.sort(linkedSorter(el => el.uid)).reverse().map(_group => <GroupAtom key={_group.uid} parentStack={[...parentStack, group.uid]} level={level + 1} group={_group}/>)}
             </>
         )}

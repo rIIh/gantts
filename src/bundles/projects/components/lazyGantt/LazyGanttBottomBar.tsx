@@ -85,8 +85,8 @@ const Mark = styled.div.attrs<{ value?: number }>(({ value = 0 }) => {
     case 2: background = '#f9f960'; break;
     case 3: background = '#f7e941'; break;
     case 4: background = '#f6d041'; break;
-    case 5: background = '#f5b840'; break;
   }
+  if (value >= 5) { background = '#f5b840'; }
   return ({
     children: value,
     style: {

@@ -12,6 +12,7 @@ import { CachedQueriesInstance } from '../../../firebase/cache';
 import { FieldPath } from '../../../firebase/types';
 import { useTypedSelector } from '../../../../redux/rootReducer';
 import { LazyGanttBottomBar } from './LazyGanttBottomBar';
+import { Blocker } from '../../../common/components/Blocker';
 
 export interface Meta {
   [key: string]: any;
@@ -60,6 +61,7 @@ export const LazyGantt: React.FC<LGanttProps & PropsWithConfig> = ({
   const [sharedMeta, setSharedMeta] = useState(Map<string, Meta>());
   const tasksInStore = useTypedSelector(state => state.projectsState.tasks.filter(value => value && value.length > 0 && value[0].project().id == project.uid || true));
   const groups = useTypedSelector(state => state.projectsState.groups.filter(value => value && value.length > 0 && value[0].projectID == project.uid || true));
+  const isBusy = useTypedSelector(state => state.app.isBusy);
   const [filters, setFilters] = useState<Filters>({
     dateFilter: DatesFilter.All,
     usersFilter: { include: [] },
@@ -98,14 +100,14 @@ export const LazyGantt: React.FC<LGanttProps & PropsWithConfig> = ({
       return null;
     },
   }}>
-      <FilterHeader project={project} initial={filters} hiddenCount={hiddenCount}
-                    onAssignedFilter={filter => setFilters(l => ({ ...l, usersFilter: filter }))}
-                    onDateFilter={filter => setFilters(l => ({ ...l, dateFilter: filter }))}
-                    onColorsFilter={filter => setFilters(l => ({ ...l, colorsFilter: filter }))}
-                    onCompletedFilter={filter => setFilters(l => ({ ...l, hideCompleted: filter }))}/>
-      <div className="gantt">
-        <LazyGanttMetaPanel project={project}/>
-        <LazyGanttCalendar project={project}/>
-      </div>
+        <FilterHeader project={project} initial={filters} hiddenCount={hiddenCount}
+                      onAssignedFilter={filter => setFilters(l => ({ ...l, usersFilter: filter }))}
+                      onDateFilter={filter => setFilters(l => ({ ...l, dateFilter: filter }))}
+                      onColorsFilter={filter => setFilters(l => ({ ...l, colorsFilter: filter }))}
+                      onCompletedFilter={filter => setFilters(l => ({ ...l, hideCompleted: filter }))}/>
+        <div className="gantt">
+          <LazyGanttMetaPanel project={project}/>
+          <LazyGanttCalendar project={project}/>
+        </div>
   </LGanttContext.Provider>;
 };

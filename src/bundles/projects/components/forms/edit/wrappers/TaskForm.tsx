@@ -1,6 +1,6 @@
 import React from 'react';
 import { LazyProject, LazyTask } from '../../../../types';
-import { BodyModel, ModelBody } from '../ModelBody';
+import { BodyModel, FormBody } from '../FormBody';
 import _ from 'lodash';
 import { useSimpleReference } from '../../../../../firebase/hooks/useSimpleReference';
 import { Spinner } from 'react-bootstrap';
@@ -14,13 +14,13 @@ export const TaskForm: React.FC<{ task: LazyTask }> = ({ task }) => {
   const [value] = useSimpleReference<LazyTask>(task.selfReference());
   const update = useDebounce((newVal: Partial<LazyTask>) => task.selfReference().update(withoutUndefined(newVal)), 1000, [task]);
   if (!value) { return <Spinner animation="border" />; }
-  const { comments, note, documents, history } = value;
+  const { comments, note, documents, history, start, end, type, color } = value;
   return <>
     <TaskHeader task={value}/>
-    <ModelBody model={{ comments, note, documents, history, selfReference: task.selfReference }}
-               storagePath={`projects/${value.uid}/documents/${task.uid}/`}
-               onModelChanged={model => value.selfReference().withConverter(TaskConverter).update(_.omitBy(model, _.isFunction))} sidebar={() => (
-        <TaskSidebar model={{ start: value.start, end: value.end, dependsOn: value.dependsOn, dependentOn: value.dependentOn }} onChange={update}/>
+    <FormBody model={{ comments, note, documents, history, selfReference: task.selfReference }}
+              storagePath={`projects/${value.uid}/documents/${task.uid}/`}
+              onModelChanged={model => value.selfReference().withConverter(TaskConverter).update(_.omitBy(model, _.isFunction))} sidebar={() => (
+        <TaskSidebar model={{ start, end, color, type }} onChange={update}/>
     )}/>
   </>;
 };

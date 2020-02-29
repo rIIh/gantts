@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Map } from 'immutable';
 import { Modal, Overlay, Spinner } from 'react-bootstrap';
 import { RemoteDocument } from '../../../../types';
-import { uploadFile } from '../ModelBody';
+import { uploadFile } from '../FormBody';
 import firebase from 'firebase';
 import md5 from 'md5';
 import { useTypedSelector } from '../../../../../../redux/rootReducer';

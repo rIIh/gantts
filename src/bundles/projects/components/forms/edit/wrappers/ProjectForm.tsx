@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { LazyProject } from '../../../../types';
 import { ProjectHeader } from './headers/ProjectHeader';
-import { BodyModel, ModelBody } from '../ModelBody';
+import { BodyModel, FormBody } from '../FormBody';
 import { ProjectSidebar } from './sidebars/ProjectSidebar';
 import _ from 'lodash';
 import { useSimpleReference } from '../../../../../firebase/hooks/useSimpleReference';
@@ -18,9 +18,9 @@ export const ProjectForm: React.FC<{ project: LazyProject }> = ({ project }) => 
   
   return <>
     <ProjectHeader project={value}/>
-    <ModelBody model={{ comments, note, documents, history, selfReference: project.selfReference }}
-               storagePath={`projects/${value.uid}/documents/root/`}
-               onModelChanged={model => value.selfReference().withConverter(ProjectConverter).update(_.omitBy(model, _.isFunction))} sidebar={() => (
+    <FormBody model={{ comments, note, documents, history, selfReference: project.selfReference }}
+              storagePath={`projects/${value.uid}/documents/root/`}
+              onModelChanged={model => value.selfReference().withConverter(ProjectConverter).update(_.omitBy(model, _.isFunction))} sidebar={() => (
         <ProjectSidebar model={{ state, startDate, daysInWeekBitMask }} onChange={updateProject}/>
     )}/>
   </>;

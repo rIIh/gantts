@@ -5,7 +5,7 @@ $newWeek: #ccc;
   $gantt_atom_height: 24px;
 
   position: relative;
-  height: 100%;
+  flex: 1 0 auto;
   display: flex;
 
   &__atom_meta {

@@ -12,7 +12,7 @@ import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useTraceUpdate } from '../../../../common/hooks/useTraceUpdate';
 import _ from 'lodash';
 import { useSimpleCollection } from '../../../../firebase/hooks/useSimpleReference';
-import { getDateColumnFromPoint } from '../helpers';
+import { getDateColumnFromPoint, linkedSorter } from '../helpers';
 import { FirestoreApp } from '../../../../common/services/firebase';
 import { useTypedSelector } from '../../../../../redux/rootReducer';
 import { diffDays } from '../../../../date/date';
@@ -58,6 +58,7 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
     ) => {
       const { uid } = group;
       const [tasks] = useSimpleCollection<LazyTask>(group.tasks());
+      const sortedTasks = useMemo(() => [...tasks].sort(linkedSorter(el => el.uid)), [tasks]);
       const [subGroups] = useSimpleCollection<LazyTaskGroup>(group.taskGroups());
       const [selected, setSelected] = useState(false);
       const { atomElements, setAtomRef } = useContext(CalendarContext);
@@ -184,7 +185,7 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
                                                underGroup
                                                   groupDatesChanged={groupDatesChanged}
                                                   getDateColumn={getDateColumn}/>)}
-          {tasks?.filter(task => !atomsState?.get(task.uid)?.hidden).map(
+          { sortedTasks?.filter(task => !atomsState?.get(task.uid)?.hidden).map(
               (task, index) => {
                 const Atom = task.type == TaskType.Task ? (
                     task.start && task.end ? TaskAtom : TaskAtomCreator

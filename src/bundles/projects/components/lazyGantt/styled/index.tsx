@@ -30,19 +30,19 @@ interface Selectable {
   selected: boolean;
 }
 
-type WrapperProps = { checked?: boolean; expand?: boolean };
+type WrapperProps = { checked?: boolean; expand?: boolean; disabled?: boolean; readOnly?: boolean };
 type FakeCheckboxProps = { styled?: StyledComponent<'div', DefaultTheme, WrapperProps> } & WrapperProps & HTMLProps<HTMLInputElement>;
 export const FakeCheckbox = forwardRef<HTMLInputElement, FakeCheckboxProps>(({ styled, expand, ...props }, ref) => {
   const Wrapper = styled ?? DefaultCheckbox;
   const inputRef = useForwardedRef(ref);
-  return <Wrapper checked={props.checked} expand={expand} onClick={() => {
+  return <Wrapper checked={props.checked} disabled={props.disabled} readOnly={props.readOnly} expand={expand} onClick={() => {
     inputRef.current?.click();
   }}>
     <input type="checkbox" {...props} style={{ display: 'none' }} ref={inputRef}/>
   </Wrapper>;
 });
 
-export const DefaultCheckbox = styled.div.attrs(props => ({ children: <><i className="tg-icon check"/>{props.children}</> }))<{ checked?: boolean; expand?: boolean }>`
+export const DefaultCheckbox = styled.div.attrs(props => ({ children: <><i className="tg-icon check"/>{props.children}</> }))<WrapperProps>`
   align-items: center;
   background-color: #fff;
   border: 0.07143em solid #ddd;
@@ -78,6 +78,11 @@ export const DefaultCheckbox = styled.div.attrs(props => ({ children: <><i class
     background-color: #1053eb;
     border: calc(0.07143em + 0.5px) solid #1053eb;
     opacity: 1;
+  `}
+  
+  ${props => (props.disabled || props.readOnly) && css`
+    cursor: auto !important;
+    color: #c5c5c5 !important;
   `}
 `;
 
@@ -145,11 +150,14 @@ interface AtomProps {
   'data-atom_uid'?: string;
 }
 
-export const ColorPill = styled.div<{ color: Colors<Palette> }>`
+export const ColorPill = styled.div<{ color: Colors<Palette>; active?: boolean }>`
   background-color: ${({ color }) => Palette[color].fill};
-  border: 1px solid ${({ color }) => Palette[color].border};
+  border: ${props => props.active ? 2 : 1}px solid ${({ color }) => Palette[color].border};
+  border-radius: 3px;
+  box-shadow: ${props => props.active ? '0 4px 7px 0 rgba(0, 0, 0, 0.28)' : null};
   display: inline-flex;
   align-items: center;
+  transition: all 400ms;
   
   &:hover {
     background-color: ${({ color }) => adjust(Palette[color].border, 20)};

@@ -3,13 +3,12 @@ import { OverlayTrigger, Popover, Spinner } from 'react-bootstrap';
 import { DocumentReference } from '../../../firebase/types';
 import { useSimpleCollection, useSimpleReference } from '../../../firebase/hooks/useSimpleReference';
 import { LazyProject, LazyTask, LazyTaskGroup, TaskType } from '../../types';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { DatesFilter, FilterHeader } from '../lazyGantt/FilterHeader';
-import { noop } from '../../../common/lib/noop';
 import { useTypedSelector } from '../../../../redux/rootReducer';
 import { attachToProject } from '../../redux/thunks';
 import { prettyNum } from '../utils';
-import { ColorPill, FakeCheckbox } from '../lazyGantt/styled';
+import { ColorPill, FakeCheckbox, Milestone } from '../lazyGantt/styled';
 import { clamp } from '../../../common/lib/clamp';
 import _ from 'lodash';
 import { useDebounce } from '../../../common/hooks/lodashHooks';
@@ -20,14 +19,17 @@ import { LazyUserInfo } from '../../../user/types';
 import { userReferences } from '../../../user/firebase';
 import { datesFilters, Filters } from '../../types/filter';
 import { Colors, Palette } from '../../colors';
-import { is } from 'immutable';
+import { useModal } from '../../../common/modal/context';
+import { AssignModal } from '../forms/AssignForm';
+import { ExtraTools } from '../lazyGantt/meta/ExtraTools';
+import { useHover } from 'react-use-gesture';
 
 const ProjectRow = styled.div`
     border-bottom: 2px #e9e9e9 solid;
     clear: both;
     font-weight: 600;
     font-size: 1.1em;
-    margin-top: 2em;
+    margin-top: 1em;
     height: 38px;
     display: flex;
     align-items: center;
@@ -53,21 +55,25 @@ const GroupRow = styled.div<{ level?: number }>`
     border-bottom: 1px #e9e9e9 solid;
     clear: both;
     color: #131313;
-    font-size: 1.1em;
+    font-size: 1em;
     font-weight: 600;
-    margin-top: 1em;
+    margin-top: ${props => props.level == 0 ? 1 : 0}em;
     padding: 0.5em 0;
-
+    
     &:hover {
       background: #f6f6f4;
     }
 `;
 
 const Meta = styled.div`
+    display: flex;
+    padding-left: 6px;
+    flex-flow: row nowrap;
+    align-items: center;
+    height: auto;
     color: #939393;
     float: left;
     font-size: 0.9em;
-    height: 1em;
     white-space: nowrap;
     width: 7.5em;
 `;
@@ -86,16 +92,16 @@ const ProgressColumn = styled.div`
 const PillColumn = styled.div`
   width: 100px;
   padding: 0 20px;
+  position: relative;
 `;
 
 export const ProjectList: React.FC<{ doc: DocumentReference }> = ({ doc }) => {
     const user = useTypedSelector(state => state.userState.user);
-    const [project] = useSimpleReference<LazyProject>(doc);
+    const [project, loading] = useSimpleReference<LazyProject>(doc);
     const isOwner = project && user && project.owner().id == user.uid;
     const [groups] = useSimpleCollection<LazyTaskGroup>(project?.taskGroups());
     const dispatch = useDispatch();
     useEffect(() => { project && dispatch(attachToProject(project)); }, [project]);
-
     
     const [filters, setFilters] = useState<Filters>({
         dateFilter: DatesFilter.All,
@@ -103,9 +109,16 @@ export const ProjectList: React.FC<{ doc: DocumentReference }> = ({ doc }) => {
         colorsFilter: [],
         hideCompleted: false,
     });
-    if (!project) {
+    
+    const [isHovered, setHovered] = useState(false);
+    const hover = useHover(({ hovering }) => setHovered(hovering));
+    
+    if (loading) {
         return <Spinner animation="grow"/>;
+    } else if (!project) {
+        return null;
     }
+
     return <ProjectContainer>
         <FilterHeader hiddenCount={0} project={project}
                       initial={filters}
@@ -113,8 +126,10 @@ export const ProjectList: React.FC<{ doc: DocumentReference }> = ({ doc }) => {
                       onDateFilter={filter => setFilters(l => ({ ...l, dateFilter: filter }))}
                       onColorsFilter={filter => setFilters(l => ({ ...l, colorsFilter: filter }))}
                       onCompletedFilter={filter => setFilters(l => ({ ...l, hideCompleted: filter }))}/>
-        <ProjectRow>
-            <Meta className="meta"/>
+        <ProjectRow {...hover()}>
+            <Meta>
+                <ExtraTools target={project} projectID={project.uid} isParentHovered={isHovered}/>
+            </Meta>
             <Title>
                 <h3><strong>{project?.title}</strong></h3>
             </Title>
@@ -130,24 +145,35 @@ const DateColumn = styled.div<{ overdue?: boolean }>`
 
 const AssignedColumn = styled.div`
   width: 20%;
+  padding-right: 12px;
   text-align: end;
 `;
 
 const GroupList: React.FC<{ group: LazyTaskGroup; level?: number; filters: Filters; isOwner: boolean }> = ({ group, level = 0, filters, isOwner }) => {
     const [groups] = useSimpleCollection<LazyTaskGroup>(group.taskGroups());
     const user = useTypedSelector(state => state.userState.user);
-    const [tasks] = useSimpleCollection<LazyTask>(group.tasks()
-        .where('assignedUsers','array-contains', user?.uid ?? 'no user'),[user?.uid]);
+    const [tasks] = useSimpleCollection<LazyTask>(isOwner ? group.tasks() :
+        group.tasks().where('assignedUsers','array-contains', user?.uid ?? 'no user'),[user?.uid]);
     const state = useTypedSelector(state => state.projectsState.calculatedProperties.get(group.uid));
+    const calculated = useTypedSelector(state => state.projectsState.calculatedProperties);
     const [collapsed, setCollapsed] = useState(false);
     
-    const filteredTasks = tasks.filter(task => datesFilters.get(filters.dateFilter)!(task));
+    const filteredTasks = tasks.filter(task => datesFilters.get(filters.dateFilter)!(task) &&
+        (filters.usersFilter.include.length == 0 || task.assignedUsers.some(u => filters.usersFilter.include.includes(u))) &&
+        (filters.colorsFilter.length == 0 || filters.colorsFilter.includes(task.color)) &&
+        ((!filters.hideCompleted || calculated.get(task.uid)?.progress != 100))
+    );
+    
+    const [isHovered, setHovered] = useState(false);
+    const hover = useHover(({ hovering }) => setHovered(hovering));
     
     if (filteredTasks.length == 0) { return null; }
     
     return <div>
-        <GroupRow>
-            <Meta/>
+        <GroupRow level={level ?? 0} {...hover()}>
+            <Meta>
+                <ExtraTools target={group} projectID={group.projectID} isParentHovered={isHovered}/>
+            </Meta>
             <Title style={{ paddingLeft: `${(level ?? 0) + 1}rem` }}>
                 <span className="project_manager__task_group_collapse" onClick={() => setCollapsed(l => !l)}>
             <span className={'fas ' + (collapsed ? 'fa-caret-right' : 'fa-caret-down')}/>
@@ -159,13 +185,13 @@ const GroupList: React.FC<{ group: LazyTaskGroup; level?: number; filters: Filte
             </ProgressColumn>
             <PillColumn/>
             <DateColumn>
-                Start
+                { level == 0 && 'Start' }
             </DateColumn>
             <DateColumn>
-                Due
+                { level == 0 && 'Due' }
             </DateColumn>
             <AssignedColumn>
-                Assigned
+                { level == 0 && 'Assigned' }
             </AssignedColumn>
         </GroupRow>
         { !collapsed && <>
@@ -205,15 +231,21 @@ const TaskAtom: React.FC<{task: LazyTask; level: number; isOwner: boolean }> = (
 
     const [assigned] = useSimpleCollection<LazyUserInfo>(
         task.assignedUsers.length > 0 ?
-        userReferences.users.where('uid','in',task.assignedUsers) : undefined);
+        userReferences.users.where('uid','in', task.assignedUsers) : undefined);
 
     const [progress, setProgress] = useState(state?.progress ?? task.progress);
     useEffect(() => setProgress(state?.progress ?? 0), [state?.progress, task.progress]);
+    const { showModal: showAssigneesModal, hideModal } = useModal(<AssignModal task={task} initialValue={assigned} onHide={() => hideModal()}/>,
+        { animation: false, dialogClassName: `a${task.uid}_assign_modal` });
     const [editing, setEditing] = useState(false);
+    const [isHovered, setHovered] = useState(false);
+    const hover = useHover(({ hovering }) => setHovered(hovering));
 
     const progressRef = useRef<HTMLInputElement>(null);
-    return <StyledTask>
-        <Meta/>
+    return <StyledTask {...hover()}>
+        <Meta>
+            <ExtraTools target={task} projectID={task.project().id} withChecklist isParentHovered={isHovered}/>
+        </Meta>
         <Title style={{ paddingLeft: `${(level ?? 0) + 1}rem` }}>
             {task.title}
         </Title>
@@ -252,10 +284,11 @@ const TaskAtom: React.FC<{task: LazyTask; level: number; isOwner: boolean }> = (
                                         </Popover.Content>
                                     </Popover>}>
             <PillColumn>
-                <ProgressBar progress={state?.progress ?? task.progress ?? 0}
-                             withoutInput
-                             color={task.color}
-                             dates={{ start: task.start, end: task.end }}/>
+                { task.type == TaskType.Task ? <ProgressBar progress={state?.progress ?? task.progress ?? 0}
+                                                            withoutInput
+                                                            color={task.color}
+                                                            dates={{ start: task.start, end: task.end }}/>
+                : <Milestone color={task.color} style={{ margin: 'auto', position: 'relative', cursor: 'pointer' }}/>}
             </PillColumn>
         </OverlayTrigger> : <PillColumn>
             <ProgressBar progress={state?.progress ?? task.progress ?? 0}
@@ -272,7 +305,7 @@ const TaskAtom: React.FC<{task: LazyTask; level: number; isOwner: boolean }> = (
         <AssignedColumn>
             <AssignedList >
                 {!assigned || assigned.length == 0 ?
-                    <AssignButton>assign</AssignButton> :
+                    (isOwner ? <AssignButton onClick={showAssigneesModal}>assign</AssignButton> : null) :
                     assigned.map(user => <Assigned key={user.uid}>{user.displayName}</Assigned>)}
             </AssignedList>
         </AssignedColumn>

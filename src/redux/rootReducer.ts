@@ -17,6 +17,7 @@ export interface ApplicationState {
 }
 
 const createRootReducer = (history: History) => combineReducers({
+  app: appReducer,
   userState: userReducer,
   projectsState: projectsReducer,
   router: connectRouter(history),

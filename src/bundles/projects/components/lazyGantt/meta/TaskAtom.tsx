@@ -121,7 +121,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
     const hide = () => needToHide = true;
 
     if (filters.colorsFilter.length > 0 && !filters.colorsFilter.includes(task.color)) { hide(); }
-    if (filters.hideCompleted && (remoteProgress == 100 || (localProgress == 100 && remoteProgress == 0))) { hide(); }
+    if (filters.hideCompleted && (remoteProgress == 100 || (localProgress == 100)) ) { hide(); }
     if (filters.usersFilter && filters.usersFilter.include.length > 0 && !assigned?.some(user => filters.usersFilter?.include.includes(user.uid))) { hide(); }
     if (!datesFilters.get(filters.dateFilter)!(task)) { hide(); }
   
@@ -411,7 +411,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
       {...hovered()}
   >
     <MetaColumn type="extra">
-      <ExtraTools target={task} withChecklist isParentHovered={isHovered}/>
+      <ExtraTools target={task} withChecklist isParentHovered={isHovered} projectID={parentStack[0]}/>
     </MetaColumn>
     <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 18px)` }}>
       <span className="project_manager__task_group_move" style={{ display: !isHovered ? 'none' : undefined }} {...bindDrag()}>

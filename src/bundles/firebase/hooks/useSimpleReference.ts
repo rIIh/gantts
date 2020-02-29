@@ -26,7 +26,7 @@ export const useSimpleReference = <Model>(document: firebase.firestore.DocumentR
   return [value, false, null];
 };
 
-export const useSimpleCollection = <Model>(collection?: firebase.firestore.CollectionReference | firebase.firestore.Query, deps: any[] = []): [Model[], boolean, Error | null] => {
+export const useSimpleCollection = <Model>(collection?: firebase.firestore.Query, deps: any[] = []): [Model[], boolean, Error | null] => {
   const lastDeps = useRef<any[]>(deps);
   const [values, setValues] = useState<Model[]>([]);
   const [reference, setReference] = useState(collection);
@@ -34,7 +34,9 @@ export const useSimpleCollection = <Model>(collection?: firebase.firestore.Colle
   useTraceUpdate({ reference });
   
   useEffect(() => {
-    if (!_.isEqualWith(reference, collection, (l, r) => l?.path == r?.path) || !_.isEqual(lastDeps.current, deps)) {
+    if ((reference == null && collection != null) ||
+        (reference != undefined && collection != undefined && !reference.isEqual(collection)) ||
+        !_.isEqual(lastDeps.current, deps)) {
       setReference(collection);
       if (!_.isEqual(lastDeps.current, deps)) { console.log('deps changed'); }
       lastDeps.current = deps;
