@@ -16,7 +16,7 @@ const today = Date.today;
 
 export const datesFilters: Map<DatesFilter, Filter> = new Map<DatesFilter, Filter>([
   [DatesFilter.All                    , () => true],
-  [DatesFilter.DueToday               , ({ end }) => end && end.isToday(today()) || false],
+  [DatesFilter.DueToday               , ({ end }) => end && (end.compareTo(today()) < 0 || end.isToday(today())) || false],
   [DatesFilter.Overdue                , ({ end }) => end && end.compareTo(today()) < 0 || false],
   [DatesFilter.InProgress             , ({ start, end }) => start && end && today().between(start, end) || false],
   [DatesFilter.DueWithinOneWeek       , ({ end }) => end && end.between(today(), today().addWeeks(1)) || false],

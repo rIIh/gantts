@@ -16,19 +16,30 @@ interface CompanyInviteProps {
 const ClickToCopy = styled.div<{ copied?: boolean; tip?: boolean }>`
   overflow: hidden;
   display: flex;
+  background: #f7f7f7;
+  border-radius: 4px;
+  padding: 0 1em;
   position: absolute;
   height: 100%;
   width: 100%;
   align-items: center;
   font-size: 0.9em;
   cursor: pointer;
+  transition: background-color 400ms;
+  
+  &:hover {
+    background: #ececec;
+  }
+  &:active {
+    background: #dcdcdc;
+  }
   
   &::before {
     opacity: ${props => props.tip ? 1 : 0};
     content: '${props => !props.copied ? 'click to copy' : 'copied'}';
     position: absolute;
     bottom: 0;
-    left: 0;
+    left: 1em;
     font-size: 0.7em;
   }
 `;

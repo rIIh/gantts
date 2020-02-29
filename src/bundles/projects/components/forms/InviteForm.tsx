@@ -14,6 +14,7 @@ import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useSimpleCollection } from '../../../firebase/hooks/useSimpleReference';
 import { AssignModalProps } from './AssignForm';
 import { useModal } from '../../../common/modal/context';
+import { useHistory } from 'react-router';
 
 interface Props {
   project: LazyProject;
@@ -22,6 +23,7 @@ interface Props {
 export const InviteModal: React.FC<Props> = ({ project }) => {
   const { usersAtCompany } = useTypedSelector(state => state.userState);
   const [enrolled] = useSimpleCollection<LazyUserInfo>(project.enrolled());
+  const history = useHistory();
   const { hideModal } = useModal();
   
   const invite = useCallback(async (user: LazyUserInfo) => {
@@ -40,6 +42,9 @@ export const InviteModal: React.FC<Props> = ({ project }) => {
       </UsersRow>
     </Modal.Body>
     <Modal.Footer>
+      <Button variant="link" onClick={() => history.push('/account/company')}>
+        Enroll users
+      </Button>
       <Button variant="primary" onClick={hideModal}>
         Close
       </Button>

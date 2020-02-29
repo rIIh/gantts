@@ -67,7 +67,7 @@ const GroupRow = styled.div<{ level?: number }>`
 
 const Meta = styled.div`
     display: flex;
-    padding-left: 6px;
+    padding-left: 12px;
     flex-flow: row nowrap;
     align-items: center;
     height: auto;
@@ -104,7 +104,7 @@ export const ProjectList: React.FC<{ doc: DocumentReference }> = ({ doc }) => {
     useEffect(() => { project && dispatch(attachToProject(project)); }, [project]);
     
     const [filters, setFilters] = useState<Filters>({
-        dateFilter: DatesFilter.All,
+        dateFilter: DatesFilter.DueToday,
         usersFilter: { include: [] },
         colorsFilter: [],
         hideCompleted: false,

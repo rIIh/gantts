@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { OverlayTrigger, Popover } from 'react-bootstrap';
 import { Discussable, Subtask, WithDocs, WithHistory, WithNotes } from '../../types';
 import styled from 'styled-components';
@@ -127,25 +127,37 @@ const StyledSubtask = styled.li`
   }
 `;
 
-export const ChecklistTrigger: React.FC<{ target: { uid: string; subtasks: Subtask[]; title: string; selfReference: () => DocumentReference } }> = ({ target, children }) => {
-  const checkSubtask = useCallback((state: boolean, index: number) => {
-    const newArray = [...target.subtasks ?? []];
-    newArray.splice(index, 1, { ...target.subtasks[index], completed: state });
+export const ChecklistTrigger: React.FC<{ target: { uid: string; subtasks: Subtask[]; title: string; selfReference: () => DocumentReference }; isOwner?: boolean }> =
+    ({ target, children, isOwner }) => {
+  const [subtasks, setSubtasks] = useState(target.subtasks);
+  const [completedHidden, setHidden] = useState(false);
+  useEffect(() => setSubtasks(target.subtasks), [target.subtasks]);
+  
+  const checkSubtask = useCallback((state: boolean, id: string) => {
+    const newArray = [...subtasks ?? []];
+    const index = newArray.findIndex(st => st.id == id) ?? -1;
+    newArray.splice(index, 1, { ...subtasks[index], completed: state });
     target.selfReference().update({ subtasks: newArray });
-  }, [target]);
-  const updateSubtask = useCallback((title: string, index: number) => {
-    const newArray = [...target.subtasks ?? []];
-    newArray.splice(index, 1, { ...target.subtasks[index], title });
+  }, [target, subtasks]);
+  
+  const updateSubtask = useCallback((title: string, id: string) => {
+    const newArray = [...subtasks ?? []];
+    const index = newArray.findIndex(st => st.id == id) ?? -1;
+    newArray.splice(index, 1, { ...subtasks[index], title });
     target.selfReference().update({ subtasks: newArray });
-  }, [target]);
+  }, [target, subtasks]);
+  
   const addTask = useCallback((title: string) => {
-    target.selfReference().update({ subtasks: [...target.subtasks, { title, completed: false, id: cuid() }] as Subtask[] });
-  }, [target]);
-  const removeTask = useCallback((index) => {
-    const newArray = [...target.subtasks ?? []];
+    target.selfReference().update({ subtasks: [...subtasks, { title, completed: false, id: cuid() }] as Subtask[] });
+  }, [target, subtasks]);
+  
+  const removeTask = useCallback((id: string) => {
+    const newArray = [...subtasks ?? []];
+    const index = newArray.findIndex(st => st.id == id) ?? -1;
     newArray.splice(index, 1);
     target.selfReference().update({ subtasks: newArray });
-  }, [target]);
+  }, [target, subtasks]);
+  
   return <OverlayTrigger trigger="click" rootClose placement="auto" overlay={(
       <Popover id={`comment-window-${target.uid}`}>
         <ChecklistSection>
@@ -153,28 +165,41 @@ export const ChecklistTrigger: React.FC<{ target: { uid: string; subtasks: Subta
           <ChecklistBody>
             <div>
               <Checklist>Checklist</Checklist>
-              <CompleteCount>0/0 items completed</CompleteCount>
+              <CompleteCount>{subtasks.filter(st => st.completed).length}/{subtasks.length} items completed</CompleteCount>
               <div style={{ textAlign: 'right' }}>
-                <HideCompleted>Hide Completed</HideCompleted>
+                <HideCompleted onClick={() => { setHidden(last => !last); }}>Hide Completed</HideCompleted>
               </div>
             </div>
             <ul style={{ marginTop: '2em' }}>
-              { target.subtasks.map((st, index) => (
+              { subtasks.filter(st => !completedHidden || !st.completed ).map((st) => (
                   <StyledSubtask key={st.id}>
-                    <span className="fas fa-trash" onClick={() => removeTask(index)} style={{ position: 'absolute', right: '0', cursor: 'pointer' }}/>
-                    <FakeCheckbox checked={st.completed} onChange={e => checkSubtask(e.currentTarget.checked, index)}/>
-                    <input type="text" placeholder="New item" value={st.title} onBlur={e => updateSubtask(e.currentTarget.value, index)}
+                    { isOwner && <span className="fas fa-trash" onClick={() => removeTask(st.id)} style={{ position: 'absolute', right: '0', cursor: 'pointer' }}/> }
+                    <FakeCheckbox checked={st.completed} onChange={e => checkSubtask(e.currentTarget.checked, st.id)}/>
+                    <input type="text" placeholder="New item" readOnly={!isOwner} value={st.title} onChange={e => {
+                      const title = e.currentTarget.value;
+                      setSubtasks(l => {
+                        const arr = [...l];
+                        const index = subtasks.findIndex(_st => _st.id == st.id) ?? -1;
+                        arr.splice(index, 1, { ...arr[index], title });
+                        return arr;
+                      });
+                    }} onBlur={e => {
+                      const index = subtasks.findIndex(_st => _st.id == st.id) ?? -1;
+                      if (subtasks[index].title != target.subtasks[index].title) {
+                        updateSubtask(e.currentTarget.value, st.id);
+                      }
+                    }}
                            style={{ flex: '1 0 auto', border: 'none', padding: '1rem', borderBottom: '1px solid lightgrey' }}/>
                   </StyledSubtask>
               ))}
-              <StyledSubtask>
+              { isOwner && <StyledSubtask>
                 <FakeCheckbox checked={false} disabled/>
                 <input type="text" placeholder="New item" onBlur={e => {
                   addTask(e.currentTarget.value);
                   e.currentTarget.value = '';
                 }}
                        style={{ flex: '1 0 auto', border: 'none', padding: '1rem', borderBottom: '1px solid lightgrey' }}/>
-              </StyledSubtask>
+              </StyledSubtask> }
             </ul>
           </ChecklistBody>
         </ChecklistSection>

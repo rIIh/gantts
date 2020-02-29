@@ -80,17 +80,20 @@ export const BottomBarMeta: React.FC = () => {
 
 const Mark = styled.div.attrs<{ value?: number }>(({ value = 0 }) => {
   let background: string = 'transparent';
+  let color: string = 'lightgrey';
   switch (value) {
     case 1: background = '#f3f3d4'; break;
     case 2: background = '#f9f960'; break;
-    case 3: background = '#f7e941'; break;
-    case 4: background = '#f6d041'; break;
+    case 3: background = '#f5b840'; break;
+    case 4: background = '#f55c00'; break;
   }
-  if (value >= 5) { background = '#f5b840'; }
+  if (value > 0 && value < 4) { color = '#767676'; }
+  else if (value >= 4) { color = 'white'; }
+  if (value >= 5) { background = 'rgba(184,59,0,0.91)'; }
   return ({
     children: value,
     style: {
-      color: value != 0 ? '#767676' : 'lightgrey',
+      color: color,
       backgroundColor: background,
     } as CSSProperties,
   });

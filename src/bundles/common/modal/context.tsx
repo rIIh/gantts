@@ -1,7 +1,8 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Modal, ModalProps } from 'react-bootstrap';
 import { Stack } from 'immutable';
 import { noop } from '../lib/noop';
+import { useHistory } from 'react-router';
 
 type ModalBuilder = React.FC<ModalProps>;
 
@@ -28,6 +29,12 @@ export const DynoModal = createContext<ModalContext>({
 export const ModalProvider: React.FC = ({ children }) => {
   const [last, setLast] = useState<Stack<ModalBuilder | null>>(Stack());
   const [ActiveModal, setActive] = useState<ModalBuilder | null>(null);
+  const history = useHistory();
+  useEffect(() => history.listen(e => {
+    console.log('Location changed');
+    setActive(null);
+    setLast(Stack());
+  }), []);
   
   const showModal = useCallback((content: JSX.Element, opts?: ModalProps) => {
     setLast(last => last.push((props) => <Modal {...opts} {...props}>{content}</Modal>));
