@@ -235,7 +235,7 @@ export const GroupAtom: React.FC<Props> = ({ group, level, parentStack }) => {
             {...hovered()}
         >
           <MetaColumn type="extra">
-            <ExtraTools target={group} isParentHovered={isHovered} projectID={parentStack[0]}/>
+            <ExtraTools target={group} isParentHovered={isHovered} projectID={parentStack[0]} isOwner={true}/>
           </MetaColumn>
           <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 18px)` }}>
             {<span>{title}</span>}

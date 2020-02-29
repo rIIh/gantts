@@ -9,6 +9,7 @@ interface Props {
   target: (LazyTask | LazyTaskGroup | LazyProject) & Discussable;
   withChecklist?: boolean;
   isParentHovered: boolean;
+  isOwner: boolean;
 }
 
 const Meta = styled.span`
@@ -16,7 +17,7 @@ const Meta = styled.span`
   width: 50%;
 `;
 
-export const ExtraTools: React.FC<Props> = ({ target, withChecklist, projectID, isParentHovered }) => {
+export const ExtraTools: React.FC<Props> = ({ target, withChecklist, projectID, isParentHovered, isOwner }) => {
   const showComments = isParentHovered || target.comments.length > 0;
   const subtasks: Subtask[] | undefined = (target as LazyTask).subtasks;
   const showChecklist = isParentHovered || (subtasks && subtasks.length > 0);
@@ -29,7 +30,7 @@ export const ExtraTools: React.FC<Props> = ({ target, withChecklist, projectID, 
     </Meta>
     {withChecklist && (
         <Meta className="icon" >
-          <ChecklistTrigger target={target as LazyTask}>
+          <ChecklistTrigger target={target as LazyTask} isOwner={isOwner}>
             <span className="tg-icon checklist" style={{ opacity: showChecklist ? undefined : 0 }}/>
           </ChecklistTrigger>
           {subtasks.length > 0 && (

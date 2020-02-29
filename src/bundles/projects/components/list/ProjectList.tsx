@@ -128,7 +128,7 @@ export const ProjectList: React.FC<{ doc: DocumentReference }> = ({ doc }) => {
                       onCompletedFilter={filter => setFilters(l => ({ ...l, hideCompleted: filter }))}/>
         <ProjectRow {...hover()}>
             <Meta>
-                <ExtraTools target={project} projectID={project.uid} isParentHovered={isHovered}/>
+                <ExtraTools target={project} projectID={project.uid} isParentHovered={isHovered} isOwner={isOwner ?? false}/>
             </Meta>
             <Title>
                 <h3><strong>{project?.title}</strong></h3>
@@ -172,7 +172,7 @@ const GroupList: React.FC<{ group: LazyTaskGroup; level?: number; filters: Filte
     return <div>
         <GroupRow level={level ?? 0} {...hover()}>
             <Meta>
-                <ExtraTools target={group} projectID={group.projectID} isParentHovered={isHovered}/>
+                <ExtraTools target={group} projectID={group.projectID} isParentHovered={isHovered} isOwner={isOwner}/>
             </Meta>
             <Title style={{ paddingLeft: `${(level ?? 0) + 1}rem` }}>
                 <span className="project_manager__task_group_collapse" onClick={() => setCollapsed(l => !l)}>
@@ -244,7 +244,7 @@ const TaskAtom: React.FC<{task: LazyTask; level: number; isOwner: boolean }> = (
     const progressRef = useRef<HTMLInputElement>(null);
     return <StyledTask {...hover()}>
         <Meta>
-            <ExtraTools target={task} projectID={task.project().id} withChecklist isParentHovered={isHovered}/>
+            <ExtraTools target={task} projectID={task.project().id} withChecklist isParentHovered={isHovered} isOwner={isOwner}/>
         </Meta>
         <Title style={{ paddingLeft: `${(level ?? 0) + 1}rem` }}>
             {task.title}

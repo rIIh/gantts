@@ -411,7 +411,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
       {...hovered()}
   >
     <MetaColumn type="extra">
-      <ExtraTools target={task} withChecklist isParentHovered={isHovered} projectID={parentStack[0]}/>
+      <ExtraTools target={task} withChecklist isParentHovered={isHovered} projectID={parentStack[0]} isOwner={true}/>
     </MetaColumn>
     <MetaColumn type="main" style={{ paddingLeft: `calc(${level}rem + 18px)` }}>
       <span className="project_manager__task_group_move" style={{ display: !isHovered ? 'none' : undefined }} {...bindDrag()}>
