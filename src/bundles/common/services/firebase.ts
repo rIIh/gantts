@@ -13,6 +13,17 @@ const firebaseConfig = {
 
 const FirebaseInstance = firebase.initializeApp(firebaseConfig);
 export const FirebaseAuth = FirebaseInstance.auth();
+const persistentKey = 'persistence';
+const Persistence = firebase.auth.Auth.Persistence;
+export class FirebaseAuthPersistence {
+  private static persistenceState: firebase.auth.Auth.Persistence = localStorage.getItem(persistentKey) ?? Persistence.SESSION;
+  public static get Persistence(): firebase.auth.Auth.Persistence { return this.persistenceState; }
+  static async set(persistence: firebase.auth.Auth.Persistence): Promise<void> {
+    this.persistenceState = persistence;
+    localStorage.setItem(persistentKey, persistence);
+    return FirebaseAuth.setPersistence(persistence);
+  }
+}
 export const FirestoreApp = FirebaseInstance.firestore();
 export const FireStorage = FirebaseInstance.storage();
 
@@ -37,7 +48,7 @@ export class FirebaseCloud {
 
 FirebaseAuth.onAuthStateChanged(user => {
   console.log('Firebase: Auth state changed');
-  if (user) {
+  if (user && FirebaseAuthPersistence.Persistence == Persistence.LOCAL) {
     localStorage.setItem('myPage.expectSignIn', '1');
   } else {
     localStorage.removeItem('myPage.expectSignIn');

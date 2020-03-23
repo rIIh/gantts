@@ -1,4 +1,4 @@
-import { FirebaseAuth, FirebaseCloud, FirestoreApp } from '../../common/services/firebase';
+import { FirebaseAuthPersistence, FirebaseAuth, FirebaseCloud, FirestoreApp } from '../../common/services/firebase';
 import { Dispatch } from 'react';
 import { ActionType } from 'typesafe-actions';
 import userActions from './actions';
@@ -8,7 +8,7 @@ import { getUserInfo } from '../lib/helpers';
 import { userReferences } from '../firebase';
 import { DocumentReference, LazyCollectionReference, LazyReference } from '../../firebase/types';
 import { CompanyConverter, UserConverter } from '../firebase/converters/users';
-import {CachedQueriesInstance} from "../../firebase/cache";
+import { CachedQueriesInstance } from '../../firebase/cache';
 
 const Persistence = firebase.auth.Auth.Persistence;
 type RootDispatch = Dispatch<ActionType<typeof userActions>>;
@@ -17,7 +17,7 @@ export const authenticateThunk = (authData: AuthData) => {
   return async (dispatch: RootDispatch) => {
     dispatch(userActions.authenticate.request());
     try {
-      await FirebaseAuth.setPersistence(authData.rememberMe ? 
+      await FirebaseAuthPersistence.set(authData.rememberMe ?
         Persistence.LOCAL : Persistence.SESSION);
       const { user } = await FirebaseAuth.signInWithEmailAndPassword(authData.email, authData.password);
       // @ts-ignore
@@ -68,7 +68,7 @@ export const signUpThunk = ({ email, password, fullName, company: companyName, r
     dispatch(userActions.authenticate.request());
     console.log('Signing up');
     try {
-      await FirebaseAuth.setPersistence(Persistence.SESSION);
+      await FirebaseAuthPersistence.set(Persistence.SESSION);
       const { user } = await FirebaseAuth
         .createUserWithEmailAndPassword(email, password);
       if (user) {
