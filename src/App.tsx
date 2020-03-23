@@ -6,9 +6,21 @@ import { expectSignIn } from './bundles/common/services/firebase';
 import { Overlay, Spinner, Row, Col, Alert, Modal } from 'react-bootstrap';
 import SideMenu from './bundles/common/components/Sidemenu';
 import { useTypedSelector } from './redux/rootReducer';
-import { ThemeProvider } from 'styled-components';
+import styled, { ThemeProvider } from 'styled-components';
 import { GanttTheme } from './bundles/projects/components/lazyGantt/types';
 import { LGanttContext } from './bundles/projects/components/lazyGantt/LazyGantt';
+
+const FilledSquare = styled.div`
+  background-color: white;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 
 const AppLayout: React.FC = () => {
   const { user, isLoading, isFailed, message } = useTypedSelector((state) => state.userState);
@@ -24,20 +36,10 @@ const AppLayout: React.FC = () => {
   }, [user, history]);
   
   return <>
-    <Overlay show={!isLoaded || isLoading}>
-      <div style={{
-        backgroundColor: 'white',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
+    <Overlay target={document.body}  show={!isLoaded || isLoading}>
+      <FilledSquare>
         <Spinner animation="grow"/>
-      </div>
+      </FilledSquare>
     </Overlay>
     {/*<Modal show={!_.isNil(activeModal)} onHide={() => dispatch(appActions.hideActiveModal())}>*/}
     {/*  { activeModal }*/}
