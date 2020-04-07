@@ -1,9 +1,9 @@
 import React, { PropsWithChildren } from 'react';
-import { LazyTask } from '../../types';
+import { Task } from '../../types';
 import styled from 'styled-components';
 
 interface Props {
-  tasks: LazyTask[];
+  tasks: Task[];
 }
 
 export const TaskList = styled.div`

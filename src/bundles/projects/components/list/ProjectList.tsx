@@ -2,26 +2,26 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { OverlayTrigger, Popover, Spinner } from 'react-bootstrap';
 import { DocumentReference } from '../../../firebase/types';
 import { useSimpleCollection, useSimpleReference } from '../../../firebase/hooks/useSimpleReference';
-import { LazyProject, LazyTask, LazyTaskGroup, TaskType } from '../../types';
+import { Project, Task, TaskGroup, TaskType } from '../../types';
 import styled, { css } from 'styled-components';
-import { DatesFilter, FilterHeader } from '../lazyGantt/FilterHeader';
+import { DatesFilter, ProjectHeader } from '../gantt/ProjectHeader';
 import { useTypedSelector } from '../../../../redux/rootReducer';
 import { attachToProject } from '../../redux/thunks';
 import { prettyNum } from '../utils';
-import { ColorPill, FakeCheckbox, Milestone } from '../lazyGantt/styled';
+import { ColorPill, FakeCheckbox, Milestone } from '../gantt/styled';
 import { clamp } from '../../../common/lib/clamp';
 import _ from 'lodash';
 import { useDebounce } from '../../../common/hooks/lodashHooks';
 import { useDispatch } from 'react-redux';
 import { ProgressBar } from '../tasks/TaskItem';
-import { AssignButton, Assigned, AssignedList } from '../lazyGantt/styled/assign';
+import { AssignButton, Assigned, AssignedList } from '../gantt/styled/assign';
 import { LazyUserInfo } from '../../../user/types';
 import { userReferences } from '../../../user/firebase';
 import { datesFilters, Filters } from '../../types/filter';
 import { Colors, Palette } from '../../colors';
 import { useModal } from '../../../common/modal/context';
 import { AssignModal } from '../forms/AssignForm';
-import { ExtraTools } from '../lazyGantt/meta/ExtraTools';
+import { ExtraTools } from '../gantt/meta/ExtraTools';
 import { useHover } from 'react-use-gesture';
 
 const ProjectRow = styled.div`
@@ -97,9 +97,9 @@ const PillColumn = styled.div`
 
 export const ProjectList: React.FC<{ doc: DocumentReference }> = ({ doc }) => {
     const user = useTypedSelector(state => state.userState.user);
-    const [project, loading] = useSimpleReference<LazyProject>(doc);
+    const [project, loading] = useSimpleReference<Project>(doc);
     const isOwner = project && user && project.owner().id == user.uid;
-    const [groups] = useSimpleCollection<LazyTaskGroup>(project?.taskGroups());
+    const [groups] = useSimpleCollection<TaskGroup>(project?.taskGroups());
     const dispatch = useDispatch();
     useEffect(() => { project && dispatch(attachToProject(project)); }, [project]);
     
@@ -120,12 +120,12 @@ export const ProjectList: React.FC<{ doc: DocumentReference }> = ({ doc }) => {
     }
 
     return <ProjectContainer>
-        <FilterHeader hiddenCount={0} project={project}
-                      initial={filters}
-                      onAssignedFilter={isOwner ? filter => setFilters(l => ({ ...l, usersFilter: filter })) : undefined}
-                      onDateFilter={filter => setFilters(l => ({ ...l, dateFilter: filter }))}
-                      onColorsFilter={filter => setFilters(l => ({ ...l, colorsFilter: filter }))}
-                      onCompletedFilter={filter => setFilters(l => ({ ...l, hideCompleted: filter }))}/>
+        <ProjectHeader hiddenCount={0} project={project}
+                       initial={filters}
+                       onAssignedFilter={isOwner ? filter => setFilters(l => ({ ...l, usersFilter: filter })) : undefined}
+                       onDateFilter={filter => setFilters(l => ({ ...l, dateFilter: filter }))}
+                       onColorsFilter={filter => setFilters(l => ({ ...l, colorsFilter: filter }))}
+                       onCompletedFilter={filter => setFilters(l => ({ ...l, hideCompleted: filter }))}/>
         <ProjectRow {...hover()}>
             <Meta>
                 <ExtraTools target={project} projectID={project.uid} isParentHovered={isHovered} isOwner={isOwner ?? false}/>
@@ -149,10 +149,10 @@ const AssignedColumn = styled.div`
   text-align: end;
 `;
 
-const GroupList: React.FC<{ group: LazyTaskGroup; level?: number; filters: Filters; isOwner: boolean }> = ({ group, level = 0, filters, isOwner }) => {
-    const [groups] = useSimpleCollection<LazyTaskGroup>(group.taskGroups());
+const GroupList: React.FC<{ group: TaskGroup; level?: number; filters: Filters; isOwner: boolean }> = ({ group, level = 0, filters, isOwner }) => {
+    const [groups] = useSimpleCollection<TaskGroup>(group.taskGroups());
     const user = useTypedSelector(state => state.userState.user);
-    const [tasks] = useSimpleCollection<LazyTask>(isOwner ? group.tasks() :
+    const [tasks] = useSimpleCollection<Task>(isOwner ? group.tasks() :
         group.tasks().where('assignedUsers','array-contains', user?.uid ?? 'no user'),[user?.uid]);
     const state = useTypedSelector(state => state.projectsState.calculatedProperties.get(group.uid));
     const calculated = useTypedSelector(state => state.projectsState.calculatedProperties);
@@ -212,7 +212,7 @@ const StyledTask = styled.div`
       background: #f6f6f4;
     }`;
 
-const TaskAtom: React.FC<{task: LazyTask; level: number; isOwner: boolean }> = ({ task, level, isOwner }) => {
+const TaskAtom: React.FC<{task: Task; level: number; isOwner: boolean }> = ({ task, level, isOwner }) => {
     const state = useTypedSelector(state => state.projectsState.calculatedProperties.get(task.uid));
     const update = useDebounce((progress: number) => task.selfReference().update({ progress }), 600, [task]);
     const progressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

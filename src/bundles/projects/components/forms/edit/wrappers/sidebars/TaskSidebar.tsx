@@ -1,16 +1,16 @@
 import { Form, FormControl, OverlayTrigger, ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import ReactDatePicker from 'react-datepicker';
 import { BitMaskInput } from '../../../../../../formik-bootstrap/components/FormikBitMaskInput';
-import { LazyProject, LazyTask, ProjectState, TaskType, WeekBitMask } from '../../../../../types';
+import { Project, Task, ProjectState, TaskType, WeekBitMask } from '../../../../../types';
 import React, { useEffect, useState } from 'react';
 import { DestroyPopover } from '../../styled/Body';
 import _ from 'lodash';
 import { diffDays } from '../../../../../../date/date';
 import { clamp } from '../../../../../../common/lib/clamp';
 import { Colors, Palette } from '../../../../../colors';
-import { ColorPill } from '../../../../lazyGantt/styled';
+import { ColorPill } from '../../../../gantt/styled';
 
-type Model = Pick<LazyTask, 'start' | 'type' | 'end' | 'color'>;
+type Model = Pick<Task, 'start' | 'type' | 'end' | 'color'>;
 
 export const TaskSidebar: React.FC<{ model: Model; onDestroyRequest?: () => void; onChange?: (newVal: Model) => void }> = ({ model, onDestroyRequest, onChange }) => {
   const [local, setState] = useState(model);

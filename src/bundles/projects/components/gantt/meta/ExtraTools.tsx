@@ -1,12 +1,12 @@
 import React from 'react';
-import { Discussable, LazyProject, LazyTask, LazyTaskGroup, Subtask } from '../../../types';
+import { Discussable, Project, Task, TaskGroup, Subtask } from '../../../types';
 import styled from 'styled-components';
 import { OverlayTrigger } from 'react-bootstrap';
 import { ChecklistTrigger, CommentFormTrigger } from '../../forms/CommentForm';
 
 interface Props {
   projectID: string;
-  target: (LazyTask | LazyTaskGroup | LazyProject) & Discussable;
+  target: (Task | TaskGroup | Project) & Discussable;
   withChecklist?: boolean;
   isParentHovered: boolean;
   isOwner: boolean;
@@ -19,7 +19,7 @@ const Meta = styled.span`
 
 export const ExtraTools: React.FC<Props> = ({ target, withChecklist, projectID, isParentHovered, isOwner }) => {
   const showComments = isParentHovered || target.comments.length > 0;
-  const subtasks: Subtask[] | undefined = (target as LazyTask).subtasks;
+  const subtasks: Subtask[] | undefined = (target as Task).subtasks;
   const showChecklist = isParentHovered || (subtasks && subtasks.length > 0);
   return <>
     <Meta className="icon" >
@@ -30,7 +30,7 @@ export const ExtraTools: React.FC<Props> = ({ target, withChecklist, projectID, 
     </Meta>
     {withChecklist && (
         <Meta className="icon" >
-          <ChecklistTrigger target={target as LazyTask} isOwner={isOwner}>
+          <ChecklistTrigger target={target as Task} isOwner={isOwner}>
             <span className="tg-icon checklist" style={{ opacity: showChecklist ? undefined : 0 }}/>
           </ChecklistTrigger>
           {subtasks.length > 0 && (

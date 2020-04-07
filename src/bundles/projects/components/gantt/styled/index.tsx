@@ -5,11 +5,11 @@ import { adjust, Colors, Palette } from '../../../colors';
 import { useForwardedRef } from '../../../../common/hooks/useForwardedRef';
 import { animated } from 'react-spring';
 
-export const GroupHeader = styled(animated.div)<{ filled?: number; dragging?: boolean }>`
+export const GroupHeader = styled(animated.div)<{ filled?: number; dragging?: boolean; size?: 'sm' | 'lg' }>`
   position: absolute;
   transition: ${props => props.dragging ? null : 'width 400ms, margin-top 400ms, height 400ms'};
   height: ${props => props.hidden ? 0 : `${props.theme.atomHeight - props.theme.barVMargin * 2}px`};
-  margin-top: ${props => `${props.theme.barVMargin}px`};
+  margin-top: ${props => `${props.size == 'sm' ? (props.theme.atomHeight - 8) / 2 : props.theme.barVMargin}px`};
   background-color: #d9d9e5;
   border-radius: 8px;
   overflow: hidden;

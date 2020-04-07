@@ -1,7 +1,7 @@
 import React, { Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useHover } from 'react-use-gesture';
 import { MetaColumn } from '../styled/meta';
-import { LazyProject, LazyTask, LazyTaskGroup, TaskType } from '../../../types';
+import { Project, Task, TaskGroup, TaskType } from '../../../types';
 import { GroupAtom, GroupState } from './GroupAtom';
 import styled from 'styled-components';
 import { useKeyUp, useRefEffect } from '../../../../common/lib/hooks';
@@ -9,7 +9,7 @@ import { ProjectConverter, TaskConverter, TaskGroupConverter } from '../../../fi
 import { documents, projectCollections, projectReferences } from '../../../firebase';
 import { UserConverter } from '../../../../user/firebase/converters/users';
 import { useHistory } from 'react-router';
-import { LGanttContext } from '../LazyGantt';
+import { GanttContext } from '../Gantt';
 import { FirestoreApp } from '../../../../common/services/firebase';
 import { prettyNum } from '../../utils';
 import { ExtraTools } from './ExtraTools';
@@ -18,7 +18,7 @@ import { useTypedSelector } from '../../../../../redux/rootReducer';
 import { ProjectForm } from '../../forms/edit/wrappers/ProjectForm';
 
 interface Props {
-  root: LazyProject;
+  root: Project;
   level: number;
   toolbar: boolean;
 }
@@ -49,16 +49,16 @@ export const ProjectAtom: React.FC<Props> = ({ root, level, toolbar }) => {
   const testGroups = useTypedSelector(state => state.projectsState.groups.get(root.uid));
   const groupState = useTypedSelector(state => state.projectsState.calculatedProperties.get(root.uid));
   const history = useHistory();
-  const { atomsState, sharedState, tasks, groups } = useContext(LGanttContext)!;
+  const { atomsState, sharedState, tasks, groups } = useContext(GanttContext)!;
   const bind = useHover(({ hovering }) => setHovered(hovering));
   const [isHovered, setHovered] = useState(false);
   const [isCollapsed, setCollapsed] = useState(false);
   const [creating, setCreating] = useState<CreatingState>(CreatingState.None);
-  const [targetGroup, setTarget] = useState<LazyTaskGroup | null>(null);
+  const [targetGroup, setTarget] = useState<TaskGroup | null>(null);
   const [input] = useRefEffect<HTMLInputElement>(null, (input) => input?.focus());
   const [formTitle, setTitle] = useState('');
   
-  const startCreation = (type: CreatingState, target: LazyTaskGroup) => {
+  const startCreation = (type: CreatingState, target: TaskGroup) => {
     setCreating(type);
     setTarget(target);
   };

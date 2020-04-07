@@ -1,7 +1,7 @@
 import firebase from 'firebase';
 import { ExtraUserInfo } from '../../user/types';
 import { attachID, FirestoreApp } from '../../common/services/firebase';
-import { LazyProject } from '../../projects/types';
+import { Project } from '../../projects/types';
 import _ from 'lodash';
 import { CachedQueriesInstance } from '../cache';
 

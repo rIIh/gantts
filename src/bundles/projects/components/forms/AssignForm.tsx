@@ -1,23 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { LazyProject, LazyTask, Project } from '../../types';
+import { Project, Task } from '../../types';
 import styled from 'styled-components';
 import { Button, Modal, FormControl } from 'react-bootstrap';
 import { useKeyUp } from '../../../common/lib/hooks';
-import { LazyUserInfo, UserInfo } from '../../../user/types';
+import { LazyUserInfo } from '../../../user/types';
 import { InviteModal } from './InviteForm';
 import { useDispatch } from 'react-redux';
-import { useCollectionReference, useReference } from '../../../firebase/hooks/useReference';
 import { appActions } from '../../../common/store/actions';
-import { useCollectionData, useDocumentData } from 'react-firebase-hooks/firestore';
 import { useSimpleCollection, useSimpleReference } from '../../../firebase/hooks/useSimpleReference';
-import { FakeCheckbox } from '../lazyGantt/styled';
+import { FakeCheckbox } from '../gantt/styled';
 import { MyButton } from '../../../common/components/styled/Button';
 import { useModal } from '../../../common/modal/context';
 import _ from 'lodash';
-import { CachedQueriesInstance } from '../../../firebase/cache';
 
 export interface FormProps {
-  task: LazyTask;
+  task: Task;
   onChange: (selected: LazyUserInfo[]) => void;
   initialValue?: LazyUserInfo[];
 }
@@ -33,7 +30,7 @@ const Input = styled.div`
 
 const AssignForm: React.FC<FormProps> = ({ task, onChange, initialValue }) => {
   const filterPredicate = (user: LazyUserInfo) => user.displayName?.includes(filter);
-  const [project] = useSimpleReference<LazyProject>(task.project());
+  const [project] = useSimpleReference<Project>(task.project());
   const [filter, setFilter] = useState('');
   const [enrolled] = useSimpleCollection<LazyUserInfo>(project?.enrolled());
   const [selected, setSelected] = useState<LazyUserInfo[]>(initialValue ?? []);
@@ -65,14 +62,14 @@ const AssignForm: React.FC<FormProps> = ({ task, onChange, initialValue }) => {
 };
 
 export interface AssignModalProps {
-  task: LazyTask;
+  task: Task;
   initialValue?: LazyUserInfo[];
   onHide?: () => void;
 }
 
 export const AssignModal: React.FC<AssignModalProps> = ({ task, initialValue, onHide }) => {
   const [selected, setSelected] = useState<LazyUserInfo[]>(initialValue ?? []);
-  const [project] = useSimpleReference<LazyProject>(task.project());
+  const [project] = useSimpleReference<Project>(task.project());
   const dispatch = useDispatch();
   const { showModal } = useModal(project && <InviteModal project={project}/>);
   

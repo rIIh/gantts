@@ -1,0 +1,8 @@
+version: "3.7"
+services:
+  gantt-client:
+    build: .
+    container_name: gantt-client
+    restart: always
+    ports:
+      - 8080:80

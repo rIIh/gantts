@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useState } from 'react';
-import { LazyProject  } from '../../types';
+import { Project  } from '../../types';
 import { useKeyUp, useRefEffect } from '../../../common/lib/hooks';
 import { MetaBackground, MetaColumn } from './styled/meta';
 import styled from 'styled-components';
@@ -7,7 +7,7 @@ import { useHover } from 'react-use-gesture';
 import { useCollectionReference } from '../../../firebase/hooks/useReference';
 import { GroupAtom } from './meta/GroupAtom';
 import { ProjectAtom } from './meta/ProjectAtom';
-import { BottomBarMeta } from './LazyGanttBottomBar';
+import { BottomBarMeta } from './GanttBottomBar';
 
 const BackgroundColumn = styled(MetaColumn)<{ title?: string }>`
   position: relative;
@@ -33,7 +33,7 @@ const Header = styled.div`
   height: ${(props) => props.theme.headerHeight + props.theme.atomHeight}px;
 `;
 
-export const LazyGanttMetaPanel: React.FC<{ project: LazyProject }> = ({ project: _project }) => {
+export const GanttSidePanel: React.FC<{ project: Project }> = ({ project: _project }) => {
   const [project, setProject] = useState(_project);
   useEffect(() => setProject(_project), [_project]);
   const [showToolbar, setToolbar] = useState(false);

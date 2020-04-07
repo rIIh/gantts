@@ -1,0 +1,18 @@
+version: "3.7"
+services:
+  gantt-client:
+    build: .
+    image: ${REGISTRY}gantt-client
+    container_name: gantt-client
+    restart: always
+    ports:
+      - 80
+    networks:
+      - web
+    labels:
+      - traefik.http.routers.gantt.rule=Host(`gantt.${REMOTE:-localhost}`)
+      - traefik.docker.network=web
+
+networks:
+  web:
+    external: true

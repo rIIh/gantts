@@ -2,13 +2,13 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import styled from 'styled-components';
 import { Set } from 'immutable';
 import { Dropdown, FormControl, InputGroup, Form } from 'react-bootstrap';
-import { LGanttContext } from './LazyGantt';
+import { GanttContext } from './Gantt';
 import { LazyUserInfo } from '../../../user/types';
 import _ from 'lodash';
 import { useSimpleCollection } from '../../../firebase/hooks/useSimpleReference';
 import { Colors, Palette } from '../../colors';
 import { ColorPill } from './styled';
-import {LazyProject} from '../../types';
+import { Project } from '../../types';
 import { Filters } from '../../types/filter';
 
 const Header = styled.div`
@@ -39,14 +39,13 @@ export enum DatesFilter {
   StartingWithinOneWeek     = 'Starting within 1 week',
   StartingWithinTwoWeek     = 'Starting within 2 week',
   StartingWithinFourWeek    = 'Starting within 4 week',
-  // RemainingToday            = 'Remaining today',
   OnlyMilestones            = 'Only milestones',
   NotScheduled              = 'Not scheduled',
   Completed                 = 'Completed',
 }
 
 interface Props {
-  project: LazyProject;
+  project: Project;
   hiddenCount: number;
   initial: Filters;
   onAssignedFilter?: (newFilter: AssignedFilter) => void;
@@ -95,7 +94,7 @@ export const CheckField: React.FC<{ checked?: boolean; onChecked?: (checked: boo
     </InputGroup>;
 };
 
-export const FilterHeader: React.FC<Props> = ({ project, initial, hiddenCount, onAssignedFilter, onCompletedFilter, onColorsFilter, onDateFilter }) => {
+export const ProjectHeader: React.FC<Props> = ({ project, initial, hiddenCount, onAssignedFilter, onCompletedFilter, onColorsFilter, onDateFilter }) => {
   const [enrolled] = useSimpleCollection<LazyUserInfo>(project.enrolled());
   const [checkedUsers, setCheckedUsers] = useState(Set<string>(initial.usersFilter.include));
   useEffect(() => onAssignedFilter?.({ include: checkedUsers.toArray() }), [checkedUsers]);

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Modal, ModalProps } from 'react-bootstrap';
-import { LazyProject } from '../../types';
+import { Project } from '../../types';
 import { useTypedSelector } from '../../../../redux/rootReducer';
 import { UserPic } from '../../../user/components/UserPic';
 import { LazyUserInfo } from '../../../user/types';
@@ -17,7 +17,7 @@ import { useModal } from '../../../common/modal/context';
 import { useHistory } from 'react-router';
 
 interface Props {
-  project: LazyProject;
+  project: Project;
 }
 
 export const InviteModal: React.FC<Props> = ({ project }) => {

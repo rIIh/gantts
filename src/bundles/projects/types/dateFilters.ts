@@ -1,2 +1,2 @@
-import { DatesFilter } from '../components/lazyGantt/FilterHeader';
+import { DatesFilter } from '../components/gantt/ProjectHeader';
 

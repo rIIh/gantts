@@ -1,4 +1,4 @@
-import { DateRange, LazyTask, TaskType } from '../../../types';
+import { DateRange, Task, TaskType } from '../../../types';
 import React, { forwardRef, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Atom, AtomDot, AtomHandle, AtomLabel, AtomWrapper, Milestone } from '../styled';
@@ -6,12 +6,12 @@ import { useDrag, useGesture, useHover } from 'react-use-gesture';
 import { Overlay } from 'react-bootstrap';
 import Link, { LinkState } from './Link';
 import { useTheme } from '../../../../styled-components/hooks/useTheme';
-import { LGanttContext } from '../LazyGantt';
+import { GanttContext } from '../Gantt';
 import { LazyReference } from '../../../../firebase/types';
 import _ from 'lodash';
 import { useForwardedRef } from '../../../../common/hooks/useForwardedRef';
 import { FullGestureState } from 'react-use-gesture/dist/types';
-import { CalendarContext } from '../LazyGanttCalendar';
+import { CalendarContext } from '../GanttCalendar';
 import { GanttTheme } from '../types';
 import { getDateColumnFromPoint } from '../helpers';
 import { WTooltip } from '../../../../bootstrap/WTooltip';
@@ -19,7 +19,7 @@ import { diffDays } from '../../../../date/date';
 import { useTypedSelector } from '../../../../../redux/rootReducer';
 
 interface AtomProps {
-  task: LazyTask;
+  task: Task;
   getDateColumn: (date: Date) => HTMLElement;
   style?: React.CSSProperties;
   parentOffset: number;
@@ -61,7 +61,7 @@ const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateCo
   const atom = useForwardedRef(ref);
   const [selected, setSelected] = useState(false);
   const theme = useTheme<GanttTheme>();
-  const { atomsState, tasks } = useContext(LGanttContext)!;
+  const { atomsState, tasks } = useContext(GanttContext)!;
   const { setAtomRef } = useContext(CalendarContext);
   
   useEffect(() => () => setAtomRef(task.uid, null), []);
@@ -196,8 +196,8 @@ const TaskAtom = forwardRef<HTMLDivElement, AtomProps>(({ task, style, getDateCo
         
         if (taskRef && targetRef && !_.isEqual(taskRef, targetRef)) {
           const isLeft = type == 'left';
-          const taskProp: keyof LazyTask = isLeft ? 'dependsOn' : 'dependentOn';
-          const targetProp: keyof LazyTask = isLeft ? 'dependentOn' : 'dependsOn';
+          const taskProp: keyof Task = isLeft ? 'dependsOn' : 'dependentOn';
+          const targetProp: keyof Task = isLeft ? 'dependentOn' : 'dependsOn';
           if (target?.[taskProp]?.().some(dep => dep.id == task.uid)) {
             alert('Circle reference not allowed');
           }

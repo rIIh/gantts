@@ -1,17 +1,17 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { LazyTask, LazyTaskGroup, TaskType } from '../../../types';
+import { Task, TaskGroup, TaskType } from '../../../types';
 import { MetaColumn } from '../styled/meta';
 import { useDrag, useHover } from 'react-use-gesture';
 import styled from 'styled-components';
 import { AssignModal } from '../../forms/AssignForm';
-import { LGanttContext } from '../LazyGantt';
+import { GanttContext } from '../Gantt';
 import { clearDependencies } from '../../../firebase/models';
 import { useDispatch } from 'react-redux';
 import { appActions } from '../../../../common/store/actions';
 import _ from 'lodash';
 import { clamp } from '../../../../common/lib/clamp';
 import { useProgressUpdate } from '../../tasks/TaskItem';
-import { DatesFilter } from '../FilterHeader';
+import { DatesFilter } from '../ProjectHeader';
 import { TaskDetails } from '../../tasks/TaskDetails';
 import { LazyUserInfo } from '../../../../user/types';
 import { useSimpleCollection } from '../../../../firebase/hooks/useSimpleReference';
@@ -33,7 +33,7 @@ import { projectCollections } from '../../../firebase';
 import { linkedSorter } from '../helpers';
 
 interface Props {
-  task: LazyTask;
+  task: Task;
   parentStack: string[];
   level: number;
 }
@@ -68,7 +68,7 @@ const Assigned = styled.p`
 
 export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
   const { title } = task;
-  const { atomsState, writeAtomsState, writeSharedState, groups, tasks, sharedState, filters } = useContext(LGanttContext)!;
+  const { atomsState, writeAtomsState, writeSharedState, groups, tasks, sharedState, filters } = useContext(GanttContext)!;
   const [isHovered, setHovered] = useState(false);
   const hovered = useHover(({ hovering }) => setHovered(hovering));
   const [assigned] = useSimpleCollection<LazyUserInfo>(
@@ -261,7 +261,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
         const taskBeforeDraggedTask = tasks.find(_task => _task.next == task.uid);
         if (taskBeforeDraggedTask) { batch.update(taskBeforeDraggedTask.selfReference(), { next: task.next ?? FieldValue.delete() }); }
         // Popped
-        const currentClone: LazyTask = {
+        const currentClone: Task = {
           ...task,
           parentGroup: () => targetParent.selfReference(),
           selfReference: () => targetParent.tasks().doc(task.uid),
@@ -283,7 +283,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
       const toolbarGroup = groups.find(g => g.uid == target.element.getAttribute('data-toolbar-meta') ?? '');
       if (toolbarGroup) {
         const siblingDoc = toolbarGroup.selfReference().parent.doc();
-        const sibling: LazyTaskGroup = {
+        const sibling: TaskGroup = {
           selfReference: () => siblingDoc,
           uid: siblingDoc.id,
           tasks: () => siblingDoc.collection(projectCollections.tasksCollection).withConverter(TaskConverter),
@@ -301,7 +301,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
         const taskBeforeDraggedTask = tasks.find(_task => _task.next == task.uid);
         if (taskBeforeDraggedTask) { batch.update(taskBeforeDraggedTask.selfReference(), { next: task.next ?? FieldValue.delete() }); }
         // Popped
-        const currentClone: LazyTask = {
+        const currentClone: Task = {
           ...task,
           parentGroup: () => sibling.selfReference(),
           selfReference: () => sibling.tasks().doc(task.uid),
@@ -328,7 +328,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
             }
             batch.delete(task.selfReference());
             // Popped
-            const currentClone: LazyTask = {
+            const currentClone: Task = {
               ...task,
               parentGroup: () => groupBefore.selfReference(),
               selfReference: () => groupBefore.tasks().doc(task.uid),
@@ -342,7 +342,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
             batch.set(groupBefore.tasks().doc(task.uid), currentClone);
           } else {
             const siblingDoc = targetGroup.selfReference().parent.doc();
-            const sibling: LazyTaskGroup = {
+            const sibling: TaskGroup = {
               selfReference: () => siblingDoc,
               uid: siblingDoc.id,
               tasks: () => siblingDoc.collection(projectCollections.tasksCollection).withConverter(TaskConverter),
@@ -362,7 +362,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
               batch.update(taskBeforeDraggedTask.selfReference(), { next: task.next ?? FieldValue.delete() });
             }
             // Popped
-            const currentClone: LazyTask = {
+            const currentClone: Task = {
               ...task,
               parentGroup: () => sibling.selfReference(),
               selfReference: () => sibling.tasks().doc(task.uid),
@@ -385,7 +385,7 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
           // Popped
       
           const firstTask = tasks.filter(t => t.parentGroup().id == targetGroup.uid).sort(linkedSorter(el => el.uid))[0];
-          const currentClone: LazyTask = {
+          const currentClone: Task = {
             ...task,
             parentGroup: () => targetGroup.selfReference(),
             selfReference: () => targetGroup.tasks().doc(task.uid),
@@ -442,9 +442,6 @@ export const TaskAtom: React.FC<Props> = ({ task, level, parentStack }) => {
             assigned.map(user => <Assigned key={user.uid}>{user.displayName}</Assigned>)}
       </AssignedList>
     </MetaColumn>
-    {/*<Modal show={showAssignList} >*/}
-    {/*  <AssignModal task={task} initialValue={assigned} onHide={() => setAssignList(false)}/>*/}
-    {/*</Modal>*/}
     <MetaColumn type="progress" style={{ justifyContent: 'center' }}>
       { task.type == TaskType.Task ? (
           <input type="text" ref={progressRef} onClick={() => progressRef.current?.select()} style={{

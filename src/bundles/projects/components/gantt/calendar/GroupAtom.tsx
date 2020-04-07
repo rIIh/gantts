@@ -1,4 +1,4 @@
-import { DateRange, LazyTask, LazyTaskGroup, TaskType } from '../../../types';
+import { DateRange, Task, TaskGroup, TaskType } from '../../../types';
 import React, { forwardRef, memo, PropsWithRef, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AtomWrapper, GroupHeader } from '../styled';
 import { useCollectionReference } from '../../../../firebase/hooks/useReference';
@@ -6,8 +6,8 @@ import { useDrag, useHover } from 'react-use-gesture';
 import TaskAtom from './TaskAtom';
 import TaskAtomCreator from './TaskAtomCreator';
 import MilestoneAtomCreator from './MilestoneAtomCreator';
-import { LGanttContext } from '../LazyGantt';
-import { CalendarContext } from '../LazyGanttCalendar';
+import { GanttContext } from '../Gantt';
+import { CalendarContext } from '../GanttCalendar';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useTraceUpdate } from '../../../../common/hooks/useTraceUpdate';
 import _ from 'lodash';
@@ -17,25 +17,19 @@ import { FirestoreApp } from '../../../../common/services/firebase';
 import { useTypedSelector } from '../../../../../redux/rootReducer';
 import { diffDays } from '../../../../date/date';
 import { useSpring, animated } from 'react-spring';
-import { IterableDate } from '../../../../date/iterableDate';
-import { DocumentReference } from '../../../../firebase/types';
 import { CachedQueriesInstance } from '../../../../firebase/cache';
 import firebase from 'firebase';
 
 interface Props {
-  group: LazyTaskGroup;
+  group: TaskGroup;
   getDateColumn: (date: Date) => HTMLElement;
   underGroup?: boolean;
-  groupDatesChanged: (group: LazyTaskGroup, start: Date, end: Date) => void;
+  groupDatesChanged: (group: TaskGroup, start: Date, end: Date) => void;
 }
 
-enum DragType {
-  Horizontal, None,
-}
-
-const shiftGroup = async (group: LazyTaskGroup, days: number, batch: firebase.firestore.WriteBatch = FirestoreApp.batch(), initial = true) => {
-  const tasks = await CachedQueriesInstance.getManyOnce<LazyTask>(group.tasks());
-  const groups = await CachedQueriesInstance.getManyOnce<LazyTaskGroup>(group.taskGroups());
+const shiftGroup = async (group: TaskGroup, days: number, batch: firebase.firestore.WriteBatch = FirestoreApp.batch(), initial = true) => {
+  const tasks = await CachedQueriesInstance.getManyOnce<Task>(group.tasks());
+  const groups = await CachedQueriesInstance.getManyOnce<TaskGroup>(group.taskGroups());
   for (let task of tasks) {
     if (task.start) {
       batch.update(task.selfReference(),{
@@ -57,13 +51,13 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
         { group, getDateColumn, groupDatesChanged, underGroup, ...events }, ref
     ) => {
       const { uid } = group;
-      const [tasks] = useSimpleCollection<LazyTask>(group.tasks());
+      const [tasks] = useSimpleCollection<Task>(group.tasks());
       const sortedTasks = useMemo(() => [...tasks].sort(linkedSorter(el => el.uid)), [tasks]);
-      const [subGroups] = useSimpleCollection<LazyTaskGroup>(group.taskGroups());
+      const [subGroups] = useSimpleCollection<TaskGroup>(group.taskGroups());
       const [selected, setSelected] = useState(false);
       const { atomElements, setAtomRef } = useContext(CalendarContext);
       const [hasAnchor, setAnchor] = useState(false);
-      const { atomsState, groups, tasks: allTasks } = useContext(LGanttContext)!;
+      const { atomsState, groups, tasks: allTasks } = useContext(GanttContext)!;
       const groupState = useTypedSelector(state => state.projectsState.calculatedProperties.get(group.uid));
       const shared = atomsState.get(group.uid) as { collapsed?: boolean };
       const initialized = groupState != null && groupState.start;
@@ -174,6 +168,7 @@ const GroupAtom = memo(forwardRef<HTMLDivElement, Props>(
                        id={`group_${group.uid}_calendar`}
                        filled={groupState?.progress}
                        {...drag()}
+                        size={underGroup ? 'sm' : undefined}
                        style={{
                          width: initialized ? `${(groupEndCol?.offsetLeft ?? 0) - (groupStartCol?.offsetLeft ?? 0) + 29}px` : '0',
                          height: underGroup ? '8px' : undefined,

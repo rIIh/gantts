@@ -1,5 +1,5 @@
 import React, { ChangeEvent, forwardRef, MouseEventHandler, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { LazyTask } from '../../types';
+import { Task } from '../../types';
 import { LazyReference } from '../../../firebase/types';
 import { useCollectionReference, useReference } from '../../../firebase/hooks/useReference';
 import styled from 'styled-components';
@@ -21,7 +21,7 @@ import { adjust, Colors, Palette } from '../../colors';
 import {userReferences} from "../../../user/firebase";
 
 interface Props {
-  task: LazyReference<LazyTask>;
+  task: LazyReference<Task>;
 }
 
 const Item = styled.div`
@@ -165,7 +165,7 @@ export const ProgressBar = forwardRef<HTMLDivElement, ProgressProps>(({ progress
     </Progress>;
 });
 
-export async function updateProgress(task: LazyTask, progress: number | undefined) {
+export async function updateProgress(task: Task, progress: number | undefined) {
   if (!task.progress && progress == 0 || task.progress == progress) { return; }
   try {
     await task.selfReference().update({ progress: progress });
@@ -175,14 +175,14 @@ export async function updateProgress(task: LazyTask, progress: number | undefine
   }
 }
 
-export const useProgressUpdate = (task: LazyTask | null, progress: number | undefined) => {
+export const useProgressUpdate = (task: Task | null, progress: number | undefined) => {
   const debounceAction = useCallback(_.debounce(updateProgress, 600), []);
   useEffect(() => { task && debounceAction(task, progress); }, [progress]);
 };
 
 
 export const TaskItem: React.FC<Props> = ({ task }) => {
-  const [taskData, loading, error] = useSimpleReference<LazyTask>(task.Reference);
+  const [taskData, loading, error] = useSimpleReference<Task>(task.Reference);
   const [assigned] = useSimpleCollection<LazyUserInfo>(taskData && taskData.assignedUsers.length > 0 ?
       userReferences.users.where('uid','in', taskData.assignedUsers) : undefined, [taskData?.assignedUsers]);
   const [remoteProgress, setProgress] = useState(taskData?.progress);

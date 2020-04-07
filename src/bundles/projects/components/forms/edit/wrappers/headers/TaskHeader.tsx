@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react';
-import { LazyTask } from '../../../../../types';
+import { Task } from '../../../../../types';
 import { ModelHeader } from '../../ModelHeader';
 import { Model } from '../../types';
 import _ from 'lodash';
 
-export const TaskHeader: React.FC<{ task: LazyTask}> = ({ task }) => {
+export const TaskHeader: React.FC<{ task: Task}> = ({ task }) => {
   const update = useCallback(_.debounce((model: Model) => {
     console.log(model);
     if (!(model.start && model.end) || model.end.compareTo(model.start) > 0) {

@@ -1,7 +1,7 @@
 import {
-  LazyProject,
-  LazyTask,
-  LazyTaskGroup,
+  Project,
+  Task,
+  TaskGroup,
   ProjectCreator,
   ProjectState,
   Subtask,
@@ -54,10 +54,10 @@ const convertTimestampPropsToDate = <T extends Object>(object: T): T => {
   }) as T;
 };
 
-export const ProjectConverter: firebase.firestore.FirestoreDataConverter<LazyProject> = {
+export const ProjectConverter: firebase.firestore.FirestoreDataConverter<Project> = {
   fromFirestore(snapshot: firebase.firestore.QueryDocumentSnapshot<ProjectSnapshot>,
       options: firebase.firestore.SnapshotOptions
-  ): LazyProject {
+  ): Project {
     let { owner, enrolled, groups, startDate, comments, state, ...raw } = convertTimestampPropsToDate(snapshot.data());
     return {
       ...raw,
@@ -71,7 +71,7 @@ export const ProjectConverter: firebase.firestore.FirestoreDataConverter<LazyPro
       taskGroups: () => FirestoreApp.collection(groups).withConverter(TaskGroupConverter),
     };
   },
-  toFirestore(modelObject: LazyProject): ProjectSnapshot {
+  toFirestore(modelObject: Project): ProjectSnapshot {
     const { owner, taskGroups, enrolled, selfReference, ...raw } = modelObject;
     return {
       ...raw,
@@ -85,10 +85,10 @@ export const ProjectConverter: firebase.firestore.FirestoreDataConverter<LazyPro
   },
 };
 
-export const TaskGroupConverter: firebase.firestore.FirestoreDataConverter<LazyTaskGroup> = {
+export const TaskGroupConverter: firebase.firestore.FirestoreDataConverter<TaskGroup> = {
   fromFirestore(snapshot: firebase.firestore.QueryDocumentSnapshot<TaskGroupSnapshot>,
       options: firebase.firestore.SnapshotOptions
-  ): LazyTaskGroup {
+  ): TaskGroup {
     const { tasks, taskGroups, comments, ...raw } = convertTimestampPropsToDate(snapshot.data());
     return {
       ...raw,
@@ -98,7 +98,7 @@ export const TaskGroupConverter: firebase.firestore.FirestoreDataConverter<LazyT
       tasks: () => FirestoreApp.collection(tasks).withConverter(TaskConverter),
       taskGroups: () => FirestoreApp.collection(taskGroups).withConverter(TaskGroupConverter),
     };
-  }, toFirestore(modelObject: LazyTaskGroup): TaskGroupSnapshot {
+  }, toFirestore(modelObject: TaskGroup): TaskGroupSnapshot {
     const { tasks, taskGroups, uid, selfReference, ...raw } = modelObject;
     const data: TaskGroupSnapshot = {
       ...raw,
@@ -109,10 +109,10 @@ export const TaskGroupConverter: firebase.firestore.FirestoreDataConverter<LazyT
   },
 };
 
-export const TaskConverter: firebase.firestore.FirestoreDataConverter<LazyTask> = {
+export const TaskConverter: firebase.firestore.FirestoreDataConverter<Task> = {
   fromFirestore(snapshot: firebase.firestore.QueryDocumentSnapshot<TaskSnapshot>,
       options: firebase.firestore.SnapshotOptions
-  ): LazyTask {
+  ): Task {
     const { dependentOn, dependsOn, comments, project, parentGroup, progress, color, ...raw } = convertTimestampPropsToDate(snapshot.data());
     return {
       ...raw,
@@ -126,7 +126,7 @@ export const TaskConverter: firebase.firestore.FirestoreDataConverter<LazyTask> 
       project: () => FirestoreApp.doc(project.path).withConverter(ProjectConverter),
       parentGroup: () => FirestoreApp.doc(parentGroup.path).withConverter(TaskGroupConverter),
     };
-  }, toFirestore(modelObject: LazyTask): TaskSnapshot {
+  }, toFirestore(modelObject: Task): TaskSnapshot {
     const { dependentOn, dependsOn, selfReference, project, parentGroup, progress, ...raw } = modelObject;
     const data: TaskSnapshot = {
       ...raw,

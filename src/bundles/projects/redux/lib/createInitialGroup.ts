@@ -1,12 +1,12 @@
 import _ from 'lodash';
-import { LazyProject, LazyTaskGroup } from '../../types';
+import { Project, TaskGroup } from '../../types';
 import { documents, projectCollections, projectReferences } from '../../firebase';
 import { TaskConverter, TaskGroupConverter } from '../../firebase/project_converter';
 import { CollectionReference } from '../../../firebase/types';
 
 export const createInitialGroup = _.debounce(function(root: { taskGroups: () => CollectionReference; uid: string }) {
   const doc = root.taskGroups().doc();
-  const initialGroup: LazyTaskGroup = {
+  const initialGroup: TaskGroup = {
     uid: doc.id,
     projectID: root.uid,
     title: 'First Task Group',

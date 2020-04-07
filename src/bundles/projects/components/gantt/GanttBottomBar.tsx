@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import _ from 'lodash';
 import I from 'immutable';
 import { WeekBitMask } from '../../types';
-import { LGanttContext } from './LazyGantt';
+import { GanttContext } from './Gantt';
 import { useSimpleCollection } from '../../../firebase/hooks/useSimpleReference';
 import { LazyUserInfo } from '../../../user/types';
 import { scrollbarWidth } from '../../../common/lib/scrollbarWidth';
@@ -33,7 +33,7 @@ const Title = styled.div`
   text-align: end;
 `;
 
-export const LazyGanttBottomBar: React.FC = () => {
+export const GanttBottomBar: React.FC = () => {
   return <BottomBar>
     <Row>
       <Title>Hello</Title>
@@ -69,7 +69,7 @@ const MetaRow = styled(Row)`
 `;
 
 export const BottomBarMeta: React.FC = () => {
-  const { project } = useContext(LGanttContext)!;
+  const { project } = useContext(GanttContext)!;
   const [enrolledUsers] = useSimpleCollection<LazyUserInfo>(project.enrolled());
   
   return <StyledBottomBarMeta>
@@ -111,7 +111,7 @@ const Mark = styled.div.attrs<{ value?: number }>(({ value = 0 }) => {
 `;
 
 export const BottomBarCalendar: React.FC<{dates: Map<Date, HTMLDivElement>; mask: WeekBitMask}> = ({ dates, mask }) => {
-  const { project, tasks } = useContext(LGanttContext)!;
+  const { project, tasks } = useContext(GanttContext)!;
   const [enrolledUsers] = useSimpleCollection<LazyUserInfo>(project.enrolled());
   return <StyledBottomBarCalendar>
     { enrolledUsers.map(user => (

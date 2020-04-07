@@ -6,7 +6,7 @@ import { Discussion, FormBody } from './edit/FormBody';
 import { DocumentReference } from '../../../firebase/types';
 import { TaskConverter } from '../../firebase/project_converter';
 import _ from 'lodash';
-import { FakeCheckbox } from '../lazyGantt/styled';
+import { FakeCheckbox } from '../gantt/styled';
 import cuid from 'cuid';
 
 const CommentSection = styled.div`

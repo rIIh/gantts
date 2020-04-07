@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { LazyProject, LazyTask, Subtask } from '../../types';
+import { Project, Task, Subtask } from '../../types';
 import { FormControl, Modal, Row, Form, Col, Button, Figure, ListGroup, ListGroupItem, InputGroup, Spinner, Badge, Dropdown } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import { Avatar, UserPic } from '../../../user/components/UserPic';
 import { UsersRow } from '../../../user/routes/AccountSettings';
 import { useDispatch } from 'react-redux';
 import AssignForm, { AssignModal } from '../forms/AssignForm';
-import { CheckField, DropdownLink } from '../lazyGantt/FilterHeader';
+import { CheckField, DropdownLink } from '../gantt/ProjectHeader';
 import { LazyUserInfo } from '../../../user/types';
 import { useSimpleCollection, useSimpleReference } from '../../../firebase/hooks/useSimpleReference';
 import { DocumentReference } from '../../../firebase/types';
@@ -15,7 +15,7 @@ import { useProgressUpdate } from './TaskItem';
 import { clamp } from '../../../common/lib/clamp';
 import cuid from 'cuid';
 import { fractionByTruth, prettyNum } from '../utils';
-import { ColorPill } from '../lazyGantt/styled';
+import { ColorPill } from '../gantt/styled';
 import { Colors, Palette } from '../../colors';
 import { useModal } from '../../../common/modal/context';
 import {userReferences} from '../../../user/firebase';
@@ -25,7 +25,7 @@ interface Props {
 }
 
 export const TaskDetails: React.FC<Props> = ({ taskReference }) => {
-  const [task, loading] = useSimpleReference<LazyTask>(taskReference);
+  const [task, loading] = useSimpleReference<Task>(taskReference);
   const [assigned] = useSimpleCollection<LazyUserInfo>(task && task.assignedUsers.length > 0 ?
       userReferences.users.where('uid','in', task.assignedUsers) : undefined);
   const [subtask, setSubtask] = useState('');

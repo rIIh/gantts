@@ -1,28 +1,21 @@
-import React, { useState, useEffect, Fragment } from 'react';
+import React from 'react';
 import '../styles/blocks/project_link.scss';
-import { LazyProject, Project } from '../types/index';
+import { Project } from '../types';
 import { Link } from 'react-router-dom';
-import { Badge, Button, Modal, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { Avatar, UserPic } from '../../user/components/UserPic';
-import { useCollectionReference, useReference } from '../../firebase/hooks/useReference';
-import { Warning } from '../../common/components/Warning';
-import { appActions } from '../../common/store/actions';
 import { InviteModal } from './forms/InviteForm';
-import { AssignModal } from './forms/AssignForm';
-import { useDispatch } from 'react-redux';
-import { LazyReference } from '../../firebase/types';
-import { useCollectionData, useDocumentData } from 'react-firebase-hooks/firestore';
 import { LazyUserInfo } from '../../user/types';
 import { useSimpleCollection } from '../../firebase/hooks/useSimpleReference';
 import { useModal } from '../../common/modal/context';
 
 interface Props {
-  project: LazyProject;
+  project: Project;
 }
 
 const ProjectLink: React.FC<React.ComponentProps<'li'> & Props> = ({ className, project }) => {
   const [enrolled] = useSimpleCollection<LazyUserInfo>(project.enrolled());
-  const { showModal, hideModal } = useModal(<InviteModal project={project}/>);
+  const { showModal } = useModal(<InviteModal project={project}/>);
   
   return <li className={'project_link ' + className}>
     <Link className="project_link__title" to={`/projects/${project.uid}`}>{ project.title }</Link>
@@ -31,7 +24,6 @@ const ProjectLink: React.FC<React.ComponentProps<'li'> & Props> = ({ className, 
       { enrolled?.map((user) => (
           <UserPic key={user.uid} userID={user.uid} size={24} withTooltip/>
       ))}
-      {/*{ enrolledFailed && <Warning message={enrolledFailed?.message}/>}*/}
       <OverlayTrigger
               placement="bottom"
               overlay={

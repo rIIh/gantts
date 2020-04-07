@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Route, Switch, useHistory } from 'react-router';
 import Header from './bundles/common/components/Header';
 import { routes } from './routes';
@@ -7,8 +7,7 @@ import { Overlay, Spinner, Row, Col, Alert, Modal } from 'react-bootstrap';
 import SideMenu from './bundles/common/components/Sidemenu';
 import { useTypedSelector } from './redux/rootReducer';
 import styled, { ThemeProvider } from 'styled-components';
-import { GanttTheme } from './bundles/projects/components/lazyGantt/types';
-import { LGanttContext } from './bundles/projects/components/lazyGantt/LazyGantt';
+import { GanttTheme } from './bundles/projects/components/gantt/types';
 
 const FilledSquare = styled.div`
   background-color: white;

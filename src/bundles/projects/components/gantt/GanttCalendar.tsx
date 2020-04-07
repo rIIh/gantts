@@ -1,4 +1,4 @@
-import { LazyProject, LazyTask, LazyTaskGroup, TaskType, WeekBitMask } from '../../types';
+import { Project, Task, TaskGroup, TaskType, WeekBitMask } from '../../types';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import useComponentSize from '@rehooks/component-size';
 import { DateStep, IterableDate } from '../../../date/iterableDate';
@@ -13,10 +13,10 @@ import _ from 'lodash';
 import { useMultiCollection, useSimpleCollection } from '../../../firebase/hooks/useSimpleReference';
 import styled, { css } from 'styled-components';
 import { ProjectLine } from './calendar/ProjectLine';
-import { LGanttContext } from './LazyGantt';
+import { GanttContext } from './Gantt';
 import { useTypedSelector } from '../../../../redux/rootReducer';
 import { CachedQueriesInstance } from '../../../firebase/cache';
-import { BottomBarCalendar } from './LazyGanttBottomBar';
+import { BottomBarCalendar } from './GanttBottomBar';
 
 interface CalendarContextType {
   atomElements: I.Map<string, HTMLElement>;
@@ -72,10 +72,10 @@ const DateColumn = styled.div<{ lastInWeek?: boolean; isToday?: boolean; isWeeke
 `;
 
 interface GanttCalendarProps {
-  project: LazyProject;
+  project: Project;
 }
 
-export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => {
+export const GanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => {
   const { startDate, daysInWeekBitMask: weekMask, taskGroups } = project;
   
   const calendarContainer = useRef<HTMLDivElement>(null);
@@ -86,8 +86,8 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
   const [lastDayInWeek, setLastDayInWeek] = useState(-1);
   const taskGhost = useRef<HTMLDivElement>(null);
   const [iterableDate, setIterableDate] = useState<IterableDate>();
-  const [groups, loading, error] = useSimpleCollection<LazyTaskGroup>(project.taskGroups());
-  const [tasks] = useMultiCollection<LazyTask>(groups?.map(g => g.tasks()));
+  const [groups, loading, error] = useSimpleCollection<TaskGroup>(project.taskGroups());
+  const [tasks] = useMultiCollection<Task>(groups?.map(g => g.tasks()));
   const projectState = useTypedSelector(state => state.projectsState.calculatedProperties.get(project.uid));
   const tasksInStore = useTypedSelector(state => state.projectsState.tasks.filter(value => value && value.length > 0 && value[0].project().id == project.uid || true));
   
@@ -167,7 +167,7 @@ export const LazyGanttCalendar: React.FC<GanttCalendarProps> = ({ project }) => 
     return null;
   }, []);
   
-  const resizeGroup = useCallback(async (group: LazyTaskGroup, start: Date, end: Date) => {
+  const resizeGroup = useCallback(async (group: TaskGroup, start: Date, end: Date) => {
     await project.taskGroups().doc(group.uid).update({ start, end });
   }, []);
   

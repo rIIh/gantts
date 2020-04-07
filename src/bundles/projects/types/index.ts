@@ -18,8 +18,8 @@ export interface SharedState {
 export interface ProjectsState {
   documents: Immutable.Map<string, RemoteDocument[]>;
   calculatedProperties: Immutable.Map<string, SharedState>;
-  groups: Immutable.Map<string, LazyTaskGroup[]>;
-  tasks: Immutable.Map<string, LazyTask[]>;
+  groups: Immutable.Map<string, TaskGroup[]>;
+  tasks: Immutable.Map<string, Task[]>;
   attachedProjects: Immutable.Map<string, (() => void)[]>;
   isFailed?: Error;
   isLoading: boolean;
@@ -37,27 +37,13 @@ export enum ProjectState {
   Complete,
 }
 
-export interface LazyProject extends ProjectCreator {
+export interface Project extends ProjectCreator {
   uid: string;
   state: ProjectState;
   selfReference: () => DocumentReference;
   owner: () => DocumentReference;
   enrolled: () => CollectionReference;
   taskGroups: () => CollectionReference;
-}
-
-export interface Project extends ProjectCreator {
-  id: string;
-  owner: UserInfo;
-  complete: boolean;
-  enrolled: UserInfo[];
-  onHold: boolean;
-}
-
-export interface TaskCreator {
-  start?: Date;
-  end?: Date;
-  parentID?: string;
 }
 
 export enum CalendarScale {
@@ -89,11 +75,7 @@ export interface TaskGroupConstructor extends Discussable, WithNotes, WithDocs, 
   projectID: ProjectID;
 }
 
-export interface TaskGroup extends TaskGroupConstructor {
-  id: string;
-}
-
-export interface LazyTaskGroup extends TaskGroupConstructor, Orderable {
+export interface TaskGroup extends TaskGroupConstructor, Orderable {
   uid: string;
   selfReference: () => DocumentReference;
   tasks: () => CollectionReference;
@@ -113,7 +95,7 @@ export enum TaskType {
   Task, Milestone,
 }
 
-export interface LazyTask extends TaskConstructor, Orderable {
+export interface Task extends TaskConstructor, Orderable {
   uid: string;
   color: Colors<Palette>;
   type: TaskType;
@@ -127,15 +109,6 @@ export interface LazyTask extends TaskConstructor, Orderable {
 export interface DateRange {
   start: Date;
   end: Date;
-}
-
-export interface Task extends TaskConstructor {
-  id: string;
-  type: TaskType;
-  subtasks: Subtask[];
-  dependsOn?: Task;
-  dependentOn?: Task;
-  assigned: UserInfo[];
 }
 
 export interface Subtask {
@@ -193,7 +166,7 @@ export interface Meta {
   enrolled?: LazyUserInfo[];
 }
 
-export interface LGanttProps {
-  project: LazyProject;
+export interface GanttProps {
+  project: Project;
 }
 

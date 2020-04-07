@@ -1,5 +1,5 @@
 import React from 'react';
-import { LazyProject, LazyTask } from '../../../../types';
+import { Project, Task } from '../../../../types';
 import { BodyModel, FormBody } from '../FormBody';
 import _ from 'lodash';
 import { useSimpleReference } from '../../../../../firebase/hooks/useSimpleReference';
@@ -10,9 +10,9 @@ import { TaskSidebar } from './sidebars/TaskSidebar';
 import { useDebounce } from '../../../../../common/hooks/lodashHooks';
 import { withoutUndefined } from '../../../../../common/lib/withoutUndefined';
 
-export const TaskForm: React.FC<{ task: LazyTask }> = ({ task }) => {
-  const [value] = useSimpleReference<LazyTask>(task.selfReference());
-  const update = useDebounce((newVal: Partial<LazyTask>) => task.selfReference().update(withoutUndefined(newVal)), 1000, [task]);
+export const TaskForm: React.FC<{ task: Task }> = ({ task }) => {
+  const [value] = useSimpleReference<Task>(task.selfReference());
+  const update = useDebounce((newVal: Partial<Task>) => task.selfReference().update(withoutUndefined(newVal)), 1000, [task]);
   if (!value) { return <Spinner animation="border" />; }
   const { comments, note, documents, history, start, end, type, color } = value;
   return <>

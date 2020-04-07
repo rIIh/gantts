@@ -25,3 +25,7 @@ yarn-error.log*
 /public/icons/
 /.firebaserc
 /firebase.json
+.firebase/
+.env
+passwords.txt
+/bfg.jar

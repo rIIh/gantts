@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { CalendarContext } from '../LazyGanttCalendar';
-import { LazyTask } from '../../../types';
+import { CalendarContext } from '../GanttCalendar';
+import { Task } from '../../../types';
 import Link from './Link';
 import { useTheme } from '../../../../styled-components/hooks/useTheme';
 import { hash } from 'immutable';
 import { useTraceUpdate } from '../../../../common/hooks/useTraceUpdate';
 import { GanttTheme } from '../types';
-import { LGanttContext } from '../LazyGantt';
+import { GanttContext } from '../Gantt';
 
 interface LinkerProps {
   // * [ from, to ][]
@@ -17,11 +17,8 @@ interface LinkerProps {
 export const Linker: React.FC<LinkerProps> = ({ links, container }) => {
   const { atomElements } = useContext(CalendarContext);
   const { atomHeight } = useTheme<GanttTheme>();
-  const { atomsState } = useContext(LGanttContext)!;
   const [map, setMap] = useState(new Map<string, number>());
   
-  // useTraceUpdate({links, atomElements, atomsState});
-
   useEffect(() => {
     const newMap = new Map<string, number>();
     console.log('Linker: Atoms changed');

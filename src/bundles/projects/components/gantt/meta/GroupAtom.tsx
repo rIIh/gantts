@@ -1,10 +1,10 @@
 import React, { CSSProperties, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { LazyProject, LazyTask, LazyTaskGroup } from '../../../types';
+import { Project, Task, TaskGroup } from '../../../types';
 import { MetaColumn } from '../styled/meta';
 import { useDrag, useHover } from 'react-use-gesture';
 import { TaskAtom } from './TaskAtom';
 import { allTasks, clearDependencies } from '../../../firebase/models';
-import { LGanttContext, Meta } from '../LazyGantt';
+import { GanttContext, Meta } from '../Gantt';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { useSimpleCollection } from '../../../../firebase/hooks/useSimpleReference';
 import { prettyNum } from '../../utils';
@@ -23,7 +23,7 @@ import firebase from 'firebase';
 import { FieldPath, FieldValue } from '../../../../firebase/types';
 
 interface Props {
-  group: LazyTaskGroup;
+  group: TaskGroup;
   parentStack: string[];
   level: number;
 }
@@ -37,8 +37,8 @@ export const moveTask = async (from: string, to: string, batch: firebase.firesto
   const fromRef = FirestoreApp.doc(from).withConverter(TaskConverter);
   const toRef = FirestoreApp.doc(to).withConverter(TaskConverter);
   
-  const currentValue = await CachedQueriesInstance.getOnce<LazyTask>(fromRef);
-  const currentClone: LazyTask = {
+  const currentValue = await CachedQueriesInstance.getOnce<Task>(fromRef);
+  const currentClone: Task = {
     ...currentValue,
     parentGroup: () => toRef.parent.parent!,
     selfReference: () => toRef.withConverter(TaskGroupConverter),
@@ -52,26 +52,26 @@ export const moveGroup = async (from: string, to: string, batch: firebase.firest
   const fromRef = FirestoreApp.doc(from).withConverter(TaskGroupConverter);
   const toRef = FirestoreApp.doc(to).withConverter(TaskGroupConverter);
   
-  const currentValue = await CachedQueriesInstance.getOnce<LazyTaskGroup>(fromRef);
-  const currentClone: LazyTaskGroup = {
+  const currentValue = await CachedQueriesInstance.getOnce<TaskGroup>(fromRef);
+  const currentClone: TaskGroup = {
     ...currentValue,
     taskGroups: () => toRef.collection(projectCollections.taskGroupsCollection),
     tasks: () => toRef.collection(projectCollections.tasksCollection),
     selfReference: () => toRef.withConverter(TaskGroupConverter),
     next: undefined,
   };
-  const sibling = (await CachedQueriesInstance.getManyOnce<LazyTaskGroup | undefined>( fromRef.parent
+  const sibling = (await CachedQueriesInstance.getManyOnce<TaskGroup | undefined>( fromRef.parent
       .where('next','==', currentValue.uid).withConverter(TaskGroupConverter)))[0];
   sibling && batch.update(sibling.selfReference(), { next: currentValue.next ?? null });
   batch.delete(fromRef);
   batch.set(toRef, currentClone);
   
-  const groups = (await CachedQueriesInstance.getManyOnce<LazyTaskGroup>(currentValue.taskGroups()));
+  const groups = (await CachedQueriesInstance.getManyOnce<TaskGroup>(currentValue.taskGroups()));
   for (let g of groups) {
     await moveGroup(g.selfReference().path, currentClone.taskGroups().doc(g.uid).path, batch, false);
   }
   
-  const tasks = (await CachedQueriesInstance.getManyOnce<LazyTask>(currentValue.tasks()));
+  const tasks = (await CachedQueriesInstance.getManyOnce<Task>(currentValue.tasks()));
   for (let t of tasks) {
     await moveTask(t.selfReference().path, currentClone.tasks().doc(t.uid).path, batch, false);
   }
@@ -83,13 +83,13 @@ export const moveGroup = async (from: string, to: string, batch: firebase.firest
 
 export const GroupAtom: React.FC<Props> = ({ group, level, parentStack }) => {
   const { title } = group;
-  const { atomsState, writeAtomsState, sharedState, writeSharedState, findNode, groups, filters: { hideCompleted } } = useContext(LGanttContext)!;
+  const { atomsState, writeAtomsState, sharedState, writeSharedState, findNode, groups, filters: { hideCompleted } } = useContext(GanttContext)!;
   const groupState = useTypedSelector(state => state.projectsState.calculatedProperties.get(group.uid));
   const meta = atomsState.get(group.uid) as GroupState | undefined;
   const [isHovered, setHovered] = useState(false);
   const hovered = useHover(({ hovering }) => setHovered(hovering));
-  const [subGroups] = useSimpleCollection<LazyTaskGroup>(group.taskGroups());
-  const [groupTasks] = useSimpleCollection<LazyTask>(group.tasks());
+  const [subGroups] = useSimpleCollection<TaskGroup>(group.taskGroups());
+  const [groupTasks] = useSimpleCollection<Task>(group.tasks());
   const sortedTasks = useMemo(() => [...groupTasks].sort(linkedSorter(el => el.uid)), [groupTasks]);
   const { showModal } = useModal(<GroupForm group={group}/>, { size: 'xl', animation: false });
   

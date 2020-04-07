@@ -1,12 +1,12 @@
 import { Form, OverlayTrigger, ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
 import ReactDatePicker from 'react-datepicker';
 import { BitMaskInput } from '../../../../../../formik-bootstrap/components/FormikBitMaskInput';
-import { LazyProject, ProjectState, WeekBitMask } from '../../../../../types';
+import { Project, ProjectState, WeekBitMask } from '../../../../../types';
 import React, { useEffect, useState } from 'react';
 import { DestroyPopover } from '../../styled/Body';
 import _ from 'lodash';
 
-type Model = Pick<LazyProject, 'state' | 'startDate' | 'daysInWeekBitMask'>;
+type Model = Pick<Project, 'state' | 'startDate' | 'daysInWeekBitMask'>;
 
 export const ProjectSidebar: React.FC<{ model: Model; onDestroyRequest?: () => void; onChange?: (newVal: Model) => void }> = ({ model, onDestroyRequest, onChange }) => {
   const [local, setState] = useState(model);

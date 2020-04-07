@@ -1,8 +1,8 @@
-import { ProjectsState, Project, TaskGroupID, Task } from '../types';
+import { ProjectsState } from '../types';
 import { ActionType, createReducer } from 'typesafe-actions';
 import Immutable from 'immutable';
 import projectActions from './actions';
-import { sortOrderable } from '../components/lazyGantt/helpers';
+import { sortOrderable } from '../components/gantt/helpers';
 import _ from 'lodash';
 
 const initialState: ProjectsState = {

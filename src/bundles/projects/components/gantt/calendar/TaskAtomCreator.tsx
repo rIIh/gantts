@@ -1,13 +1,13 @@
-import { LazyTask } from '../../../types';
+import { Task } from '../../../types';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import stopEvent from '../../../../common/lib/stopEvent';
 import { Atom, AtomWrapper } from '../styled';
 import { Palette } from '../../../colors';
 
 interface AtomProps {
-  task: LazyTask;
+  task: Task;
   style?: React.CSSProperties;
-  onDatesChanged: (task: LazyTask, start: Date, end: Date) => void;
+  onDatesChanged: (task: Task, start: Date, end: Date) => void;
 }
 
 interface GhostState {

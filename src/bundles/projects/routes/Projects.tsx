@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import '../styles/blocks/projects_list.scss';
 import {Alert, Button, Container, Row, ToggleButton, ToggleButtonGroup} from 'react-bootstrap';
 import {Link} from 'react-router-dom';
-import {LazyProject, ProjectState} from '../types/index';
+import {Project, ProjectState} from '../types/index';
 import ProjectLink from '../components/ProjectLink';
 import {projectReferences} from '../firebase';
 import {useTypedSelector} from '../../../redux/rootReducer';
@@ -23,7 +23,7 @@ const equals = (filter: Filter, state: ProjectState) => {
 const Projects: React.FC = () => {
   const [filter, setFilter] = useState<Filter>(Filter.Active);
   const { user } = useTypedSelector(state => state.userState);
-  const [projects, loading, isFailed] = useSimpleCollection<LazyProject>(user ? projectReferences.ownedProjects(user) : undefined);
+  const [projects, loading, isFailed] = useSimpleCollection<Project>(user ? projectReferences.ownedProjects(user) : undefined);
   
   return <Container className="py-5 page__container flex-grow-1">
     <Row className="mt-2">

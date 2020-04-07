@@ -1,22 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Form, ToggleButton, ToggleButtonGroup, Button, Alert, Container } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Form, Button, Alert, Container } from 'react-bootstrap';
 import { Formik } from 'formik';
-import { Project, WeekBitMask, ProjectCreator } from '../types';
+import { WeekBitMask, ProjectCreator } from '../types';
 import InputField from '../../formik-bootstrap/components/InputField';
 import FormikDatePicker from '../../formik-bootstrap/components/DatePicker';
 import FormikBitMaskInput from '../../formik-bootstrap/components/FormikBitMaskInput';
-import { useSelector, useDispatch } from 'react-redux';
-import { ProjectsState } from '../types/index';
+import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router';
 import { createProject } from '../redux/thunks';
 import { useTypedSelector } from '../../../redux/rootReducer';
 import * as Yup from 'yup';
-
-enum Filter {
-  Active = 'Active',
-  OnHold = 'On hold',
-  Complete = 'Complete',
-}
 
 const initialProject: ProjectCreator = {
   title: '',
@@ -64,17 +57,6 @@ const NewProject: React.FC = () => {
             <Form.Group>
               <Form.Label>Days in Week</Form.Label>
               <FormikBitMaskInput name="daysInWeekBitMask" bitmask={WeekBitMask}/>
-              {/* <ToggleButtonGroup type="checkbox" onChange={(values: number[]) => console.log(values.reduce((acc, val) => {acc += val; return acc;}))}>
-                <ToggleButton variant="outline-secondary" value={WeekBitMask.Monday}>
-                  { WeekBitMask[WeekBitMask.Monday] }
-                </ToggleButton>
-                <ToggleButton variant="outline-secondary" value={WeekBitMask.Tuesday}>
-                  { WeekBitMask[WeekBitMask.Tuesday] }
-                </ToggleButton>
-                <ToggleButton variant="outline-secondary" value={WeekBitMask.Wednesday}>
-                  { WeekBitMask[WeekBitMask.Wednesday] }
-                </ToggleButton>
-              </ToggleButtonGroup> */}
             </Form.Group>
             <Button type="submit">Create</Button>
           </Form>

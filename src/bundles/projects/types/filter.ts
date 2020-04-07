@@ -1,5 +1,5 @@
-import { AssignedFilter, DatesFilter } from '../components/lazyGantt/FilterHeader';
-import { LazyTask, TaskType } from './index';
+import { AssignedFilter, DatesFilter } from '../components/gantt/ProjectHeader';
+import { Task, TaskType } from './index';
 import { LazyUserInfo } from '../../user/types';
 import { Colors, Palette } from '../colors';
 
@@ -10,7 +10,7 @@ export interface Filters {
   hideCompleted: boolean;
 }
 
-type Filter = (model: Pick<LazyTask, 'start' | 'end' | 'type' | 'progress' >) => boolean;
+type Filter = (model: Pick<Task, 'start' | 'end' | 'type' | 'progress' >) => boolean;
 
 const today = Date.today;
 
