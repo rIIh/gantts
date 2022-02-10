@@ -63,7 +63,7 @@
     "@types/styled-components": "^4.4.2",
     "@types/workbox-build": "^5.0.0",
     "@types/yup": "^0.26.28",
-    "node-sass": "^4.13.1",
+    "node-sass": "^7.0.0",
     "workbox-build": "^5.0.0"
   },
   "scripts": {
